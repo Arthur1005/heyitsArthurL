@@ -6,6 +6,13 @@
 }
 
 @font-face {
+  font-family: 'Orbitron';
+  src: url('./assets/font/Orbitron/static/Orbitron-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
   font-family: 'OrbitronBold';
   src: url('./assets/font/Orbitron/static/Orbitron-Black.ttf') format('truetype');
   font-weight: normal;
@@ -1258,6 +1265,7 @@ td a {
     justify-content: space-between;
   }
 
+  .description { bottom: 5vh; }
   .description ul:nth-child(2) { margin-left: 10%; }
   .description ul:nth-child(3) { margin-left: 40px; margin-right: 0px; text-align: right; }
 
@@ -1317,7 +1325,7 @@ td a {
     width: 100%;
     justify-content: space-between;
     font-family: 'Orbitron';
-    margin-top: 180%;
+    margin-top: 20vh;
 
     font-size: calc((100vw - clamp(10px, 2vw, 20px) * 2) * 0.052);
     text-align: left;
