@@ -1282,7 +1282,17 @@ td a {
 
   .heroSection {
     margin-bottom: 200px;
-}
+  }
+
+  .hero {
+    width: 100%;
+    left: 0;
+  }
+
+  .try {
+    width: 100%;
+    height: auto;
+  }
 
   .mobileBreak {
     display: inline;
