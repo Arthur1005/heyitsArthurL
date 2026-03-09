@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunar Embassy – Arthur Lin</title>
+    <link rel="icon" type="image/x-icon" href="./assets/img/logo.png">
+    <link rel="stylesheet" href="style.css">
+    <script src="/libaray/p5.min.js"></script>
+</head>
+<body>
+    <header class="nav">
+        <div class="logoSection">
+            <a href="./index.html"><img src="./assets/img/logo.png" width="24px" alt="Logo"></a>
+        </div>
+        <p class="mobilePageHeader">projects</p>
+        <nav>
+            <a href="./about.html">about</a>
+            <a href="./projects.html" style="text-decoration: underline; text-underline-offset: 6px;">projects</a>
+            <a href="./reachout.html">reach out</a>
+        </nav>
+        <img id="menu" src="./assets/img/menu.svg">
+        
+    </header>
+
+    <section class="selectedProjectSection" id="projectsSection">
+        <div class="aboutPageHomeSubTitle">
+            <h1>Lunar Embassy</h1>
+            <h1>///</h1>
+        </div>
+
+        <div class="projectTop">
+            <div class="projectsCate">
+                    <button class="tablinks" onclick="openTab(event, 'projectResult')" id="projectResultTab" role="tab" aria-controls="projectResult">result</button>
+                    <button class="tablinks" onclick="openTab(event, 'projectConcept')" id="projectConceptTab" role="tab" aria-controls="projectConcept">concept</button>
+            </div>
+
+            <div class="projectRoleTime">
+                <h1>UI/UX designer / developer</h1>
+                <h1>March - Jun, 2024 </h1>
+            </div>
+        </div>
+        
+
+        <div id="projectResult" class="tab result" role="tabpanel" aria-labelledby="projectResult">
+            <div class="resultMedia" style="margin-bottom: 10%;">
+                <video autoplay muted loop playsinline preload="metadata" width="100%" class="panel">
+                    <source src="./assets/video/lunar1.mp4" type="video/mp4">
+                </video>
+                <div class="resultSpacer"></div>
+                <video autoplay muted loop playsinline preload="metadata" width="100%" class="panel">
+                    <source src="./assets/video/lunar2.mp4" type="video/mp4">
+                </video>
+                <div class="resultSpacer"></div>
+                <video autoplay muted loop playsinline preload="metadata" width="100%" class="panel">
+                    <source src="./assets/video/lunar3.mp4" type="video/mp4">
+                </video>
+                <div class="resultSpacer"></div>
+                <video autoplay muted loop playsinline preload="metadata" width="100%" class="panel">
+                    <source src="./assets/video/lunar4.mp4" type="video/mp4">
+                </video>
+                <div class="resultSpacer"></div>
+                <video autoplay muted loop playsinline preload="metadata" width="100%" class="panel">
+                    <source src="./assets/video/lunar5.mp4" type="video/mp4">
+                </video>
+            </div>
+
+
+            <a href="https://arthur1005.github.io/lunarembassywebsite/html/home.html#" target="_blank"><section class="reachOutSection">
+            <div class="marquee Lunar">
+                <span>/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;</span>
+            </div>
+            <div class="marquee Lunar marqueeReverse">
+                <span>LUNAR EMBASSY&nbsp;&nbsp;&nbsp;LUNAR EMBASSY&nbsp;&nbsp;&nbsp;LUNAR EMBASSY&nbsp;&nbsp;&nbsp;LUNAR EMBASSY&nbsp;&nbsp;&nbsp;LUNAR EMBASSY&nbsp;&nbsp;&nbsp;LUNAR EMBASSY&nbsp;&nbsp;&nbsp;LUNAR EMBASSY&nbsp;&nbsp;&nbsp;LUNAR EMBASSY&nbsp;&nbsp;&nbsp;LUNAR EMBASSY&nbsp;&nbsp;&nbsp;LUNAR EMBASSY&nbsp;&nbsp;&nbsp;LUNAR EMBASSY&nbsp;&nbsp;&nbsp;</span>
+            </div>
+            <div class="marquee Lunar">
+                <span>/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;</span>
+            </div>
+            </section></a>
+        </div>
+
+        <div id="projectConcept" class="tab" role="tabpanel" aria-labelledby="projectConcept">
+            <div class="style1">
+                <div class="projectSubTitle">
+                    <h1>Project Overview</h1>
+                    <h1>///</h1>
+                </div>
+                <div>
+                    <p>This project aimed to redesign a e-commerce online shopping website that is up and functioning alive. I chose Lunar Embassy as my website redesign client, mimic case studies, usability evaluation, and commute with client for art direction and project management. This is my very first case study and first project that I finished develop a fully functional website.</p>
+                </div>
+            </div>
+
+            <div class="style2">
+                <div class="projectSubTitle">
+                    <h1>Research & Background</h1>
+                    <h1>///</h1>
+                </div>
+                <div class="styleSideBySide">
+                    <div>
+                        <p>        Lunar Embassy is a American company own by Dennis Hope since 1980, that sell land property on the moon as well as other planets like Mars, Pluto, and more. </p>
+                        <hr>
+                        <p>After research and used the Lunar Embassy official website, a few aspects can be improve to achieve better usability. For example the intensive text line height spacing, illogical layout among web pages, and poor resolution images. These aspects has combine creating a difficult readability and occupying viewers’ cognitive load, which severely damaging user experience and satisfaction.</p>
+                    </div>
+                    <img src="./assets/img/lunar_result1.png" alt="">
+                </div>
+            </div>
+
+            <div class="style3">
+                <div class="projectSubTitle">
+                    <h1>Design Process</h1>
+                    <h1>///</h1>
+                </div>
+                <div class="style3Content">
+                    <h3>1. Emphasis</h3>
+                    <div class="styleSideBySide">
+                        <p>        I went through major pages in Lunar Embassy, and identify those design aspect that are reducing user experience.     I found many elements are inconsistency and texts has low readability and legibility. I pointed these aspect out for later on refine purpose. Beyond those negatives, I also pointed out some positives that I wish to implement similar idea in the update webstie.</p>
+                        <img src="./assets/img/lunar_result2.png" alt="">
+                    </div>
+                </div>
+                <div class="style3Content">
+                    <h3>2. Define</h3>
+                    <div class="styleSideBySide Op">
+                        <div>
+                            <p>        After research and lock down some aspects need to be changed. I set up project overview, goals, objectives and their approaches and solutions. </p>
+                            <hr>
+                            <p>I find this part was extremely important when the projects progress approach to second half. I need to consistently remind myself what are the objectives are to be able to stay on track. There were multiple times that I wanted to explore bold and artistic styles that are not aligned with the objectives and goals. The process helped to provide a clear guild towards wanted result.</p>
+                        </div>
+                        <img src="./assets/img/lunar_result3.png" alt="">
+                    </div>
+                </div>
+                <div class="style3Content">
+                    <h3>3. Ideate</h3>
+                    <div class="styleSideBySide">
+                        <div>
+                            <p>            Same as last part, Ideation and style has contribute to remind me what are the style are chosen that needs to be followed. Although there were multiple times I’ve been iterating a lot in each ideas, but the process has been making progress and generate new ideas every time I went back to previous design.</p>
+                            <hr>
+                            <p>I have made a couple wireframes for mobile and laptop, so I did not struggle a lot in this project. I did a couple version, iterate back and forth a couple times, then I have finalise both versions in wireframes.</p>
+                        </div>
+                        <img src="./assets/img/lunar_result4.png" alt="">
+                    </div>
+                </div>
+                <div class="style3Content">
+                    <h3>4. Prototype</h3>
+                    <div class="styleSideBySide Op">
+                        <div>
+                            <p>        To the most exciting part – Prototyping. I did have experience of making Figma prototypes for other projects, but this was my first time building a website prototype. There were a couple time that I struggle when link elements with each other and that I need to make different variant just to show one tiny detail. </p>
+                            <hr>
+                            <p>Overall, making the prototype is my little pleasure in this project, it was fun and I really enjoy making live prototype. </p>
+                        </div>
+                        <img src="./assets/img/lunar_result4.png" alt="">
+                    </div>
+                </div>
+                <div>
+                    <h3>5. Test</h3>
+                    <p>        I did not draw too much attention when it comes to testing. For the every first time making website redesign, I am very confident with my work, and this was a huge blunder in this projects. I find certain designs are very hard to achieve through coding, or just I did not have much coding experience back at the time. </p>
+                    <hr>
+                    <p>I realised how important is testing until I took Usability Evaluation in the next semester. I wish I could face testing a little bit more attention so that I can save some time and efforts in coding. Imagine this is a serious agency and a huge company project. This despise could cause projects delay and cost more for my mistake.</p>
+                </div>
+                <div>
+                    <h3>6. Implement</h3>
+                    <p>The coding has went better than I expected. I did faced a couple tricky problems that drives me crazy for a couple days, but the whole process has not exceed my expectation. </p>
+                    <hr>
+                    <p>My approach when facing a coding problem was try to fix it myself: edit different variable or paste code into console to test it out; if it cannot be fixed by my own, then I would start my research or else asking help from LLMs for assistant.</p>
+                    <hr>
+                    <p>One difficulty I faced was the cart function. I do not know how to make the cart to be able to update through each page. I started mess around of different variables see if there’s any changes, this last for two days night; then I do some research, found there’s a way of writing html code by JS, which I can theoretically copy current code to a new page. Eventually the cart was up and ready to go! I jumped out of the chair when I successes, it was the best highlight in the project. </p>
+                    <hr>
+                    <p>Overall, I think this is a great opportunity for me to actually code a website that is commerce based, even there’s multiple problems that I need to fix in limited time, but and I really enjoy this phase of struggle and success at the end.</p>
+                </div>
+            </div>
+
+            <div>
+                <div class="projectSubTitle">
+                    <h1>Problem & Challenge</h1>
+                    <h1>///</h1>
+                </div>
+                <div class="style4">
+                    <div>
+                        <h3>1. Integrating Responsive for mobile version</h3>
+                        <p>        I got confused with the way of making a mobile-responsive website. Specifically, I’m unsure whether I should start by creating separate versions for mobile and laptop, or develop both versions simultaneously. I believe both approaches can lead to great results, but by not constructing the two versions separately, it may be easier to identify and fix issues as they arise, allowing for quicker and more consistent solutions across both versions.</p>
+                    </div>
+                    <div>
+                        <h3>2. JS, HTML Mismatch</h3>
+                        <p>        My working process involved starting by building the HTML based on my UI prototype, then adding CSS, and finally JavaScript. However, at some point, the HTML didn’t align with the JavaScript logic I wanted to implement. As a result, I had to either change my JavaScript approach or insert and delete HTML elements that I had already created.</p>
+                    </div>
+                    <div>
+                        <h3>3. No-responding CSS</h3>
+                        <p>        Sometimes the CSS doesn’t work at all, even after I’ve made major changes. While the console can help identify the causes, my experience with using it is still limited, so it hasn’t always helped me pinpoint the main errors. I’ve encountered multiple CSS issues throughout the process, including classes overriding previous statements, z-index mismatches, and inconsistent font sizes when switching between mobile and laptop views. Although I was able to fix these problems in the end through careful check in CSS, but they were very time-consuming and required a lot of patience and careful observation.</p>
+                    </div>
+                    <div>
+                        <h3>4. Git Hub Push & Launch</h3>
+                        <p>    This project aimed to redesign a e-commerce online shopping website that is up and functioning alive. I chose Lunar Embassy as my website redesign client, mimic case studies, usability evaluation, and commute with client for art direction and project management. This is my very first case study and first project that I finished develop a fully functional website.</p>
+                </div>
+            </div>
+
+            <div class="moreInfoPDF">
+                <div class="projectSubTitle">
+                    <h1>More Information</h1>
+                    <h1>///</h1>
+                </div>
+                <p>The following are my three phases report for this project. Including my case-study and design process documentations.</p>
+                <div class="style4">
+                    <div>
+                        <embed style="max-width: 100%; aspect-ratio: 16/9;" src="./assets/files/lunarEmbassy.pdf#toolbar=0" type="">
+                    </div>
+                    <div>
+                        <embed style="max-width: 100%; aspect-ratio: 16/9;" src="./assets/files/lunarEmbassy.pdf#toolbar=0" type="">
+                    </div>
+                    <div>
+                        <embed style="max-width: 100%; aspect-ratio: 16/9;" src="./assets/files/lunarEmbassy.pdf#toolbar=0" type="">
+                    </div>
+
+                </div>
+            </div>
+
+            </div>
+        </div>
+
+        </div>
+
+    <section class="reachOutSection">
+    
+
+    <div style="padding: clamp(10px, 2vw, 20px) !important; display: flex; flex-direction: row; align-items: flex-end; width: 100%; justify-content: space-between;">
+
+        <button id="btnResult" class="navBtn" onclick="document.getElementById('projectResultTab').click()">
+            <svg viewBox="0 0 200 80" preserveAspectRatio="none">
+                <path d="M190 30 L30 30 L18 50 L30 70 L190 70 L175 50 Z" />
+            </svg>
+            <span>Result</span>
+        </button>
+
+        <button class="backTop" style="margin-top: 0; flex-shrink: 0;">
+            <svg viewBox="0 0 200 80" preserveAspectRatio="none">
+                <path d="M10 70 L10 30 L100 18 L190 30 L190 70 Z" />
+            </svg>
+            <span>Back to top</span>
+        </button>
+
+        <button id="btnConcept" class="navBtn" onclick="document.getElementById('projectConceptTab').click()">
+            <svg viewBox="0 0 200 80" preserveAspectRatio="none">
+                <path d="M10 30 L170 30 L182 50 L170 70 L10 70 L25 50 Z" />
+            </svg>
+            <span>Concept</span>
+        </button>
+
+        </div>
+
+
+
+     
+        
+    
+
+    <span class="icon"></span>
+    
+    </section>
+
+
+    </section>
+
+  
+    </section>
+
+    <footer>
+        <div class="footer1">
+            <div class="footer11">
+                <a href="./about.html">about</a>
+                <a href="./projects.html">project</a>
+                <a href="./reachout.html">reach out</a>
+            </div>
+            <div class="footer12">
+                <a href="https://www.linkedin.com/in/arthur-lin-4a5722307/" target="_blank">Linkedin</a>
+                <a href="https://www.instagram.com/_arthur.l_/" target="_blank">Instagram</a>
+            </div>
+        </div>
+        <div class="footer2">
+            <svg viewBox="0 0 184 7" xmlns="http://www.w3.org/2000/svg" class="footerLogo">
+                <path d="M29.5132 0.430551V6.95032H28.6521V3.90571H0.871353V6.95032H0V0.430551C0 0.143517 0.143517 0 0.430551 0H29.0827C29.3697 0 29.5132 0.143517 29.5132 0.430551ZM0.871353 3.03436H28.6521V0.871352H0.871353V3.03436Z"/> 
+                <path d="M59.7242 2.19376V1.73245C59.7242 1.13788 59.1091 0.871352 57.2741 0.871352H32.0254V2.9831H56.9666C59.0681 2.9831 59.7242 2.68582 59.7242 2.19376ZM32.0254 3.85445V6.95032H31.1541V0.430551C31.1541 0.143517 31.2976 0 31.5846 0H57.2741C59.7754 0 60.5955 0.635575 60.5955 1.73245V2.19376C60.5955 2.82933 60.0625 3.25988 59.2219 3.41365C60.0625 3.57767 60.5955 4.00822 60.5955 4.63355V6.95032H59.7242V4.63355C59.7242 4.15174 59.0681 3.85445 56.9666 3.85445H32.0254Z"/> 
+                <path d="M91.171 0V0.871352H76.7988V6.95032H75.9275V0.871352H61.4528V0H91.171Z"/> 
+                <path d="M121.94 0V6.95032H121.078V3.8032H93.0722V6.95032H92.2008V0H93.0722V2.93185H121.078V0H121.94Z"/> 
+                <path d="M127.317 6.07897H148.773C151.151 6.07897 151.745 5.61766 151.745 4.61304V0H152.617V4.61304C152.617 6.31474 151.397 6.95032 148.773 6.95032H127.317C124.692 6.95032 123.473 6.31474 123.473 4.61304V0H124.344V4.61304C124.344 5.61766 124.939 6.07897 127.317 6.07897Z"/> 
+                <path d="M182.729 2.19376V1.73245C182.729 1.13788 182.114 0.871352 180.279 0.871352H155.03V2.9831H179.971C182.073 2.9831 182.729 2.68582 182.729 2.19376ZM155.03 3.85445V6.95032H154.159V0.430551C154.159 0.143517 154.302 0 154.589 0H180.279C182.78 0 183.6 0.635575 183.6 1.73245V2.19376C183.6 2.82933 183.067 3.25988 182.226 3.41365C183.067 3.57767 183.6 4.00822 183.6 4.63355V6.95032H182.729V4.63355C182.729 4.15174 182.073 3.85445 179.971 3.85445H155.03Z"/>
+            </svg>
+
+
+            <!-- <img class="try" ondragstart="return false;" src="./assets/img/ARTHUR.svg" alt="">
+            <p>ART<br class="mobileBreak">HUR</p> -->
+        </div>
+        <div class="footer3">
+            <a href="">privacy policy</a>
+            <a href="">terms of service</a>
+            <p>© 2026 Arthur Lin</p>
+        </div>
+    </footer>
+    <div class="sideNav" id="sideNav">
+        <img id="sideNavCloseBtn" class="sideNavClose" src="./assets/img/menuClose.svg">
+        <a href="./about.html">about</a>
+        <a href="./projects.html">projects</a>
+        <a href="./reachout.html">reach out</a>
+    </div>
+    <script src="style.js"></script>
+</body>
+</html>
