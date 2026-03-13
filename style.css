@@ -5,6 +5,11 @@
     font-family: 'Orbitron';
 }
 
+* ::selection {
+  background-color: #47A025;
+  color: #FFFFFF;
+}
+
 @font-face {
   font-family: 'Orbitron';
   src: url('./assets/font/Orbitron/static/Orbitron-Regular.ttf') format('truetype');
