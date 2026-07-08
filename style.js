@@ -220,115 +220,6 @@ window.addEventListener('load', () => {
         });
     });
 
-    // Result media enlarge
-    // AI debug:
-        // 1. after enlarge, the reachout will reach above the last video 
-        // 2. disable in mobile breakpoint
-        // 3. image enlarge based on width, not height
-        // 4. video ratio crashed when scrolling
-    function initResultExpand() {
-        const resultTab      = document.querySelector('.tab.result');
-        const mediaContainer = document.querySelector('.resultMedia');
-        const resultImgs     = mediaContainer ? [...mediaContainer.querySelectorAll('img, video')] : [];
-        if (!resultTab || resultImgs.length === 0) return;
-
-        let stackCaptured = false;
-        let imgAbsTops    = [];
-        let scrollExitEnd = null;
-
-        function updateResultExpand() {
-            const scrollY = window.scrollY;
-            const vw      = window.innerWidth;
-            const vh      = window.innerHeight;
-
-            const maxPad       = parseFloat(getComputedStyle(resultTab).paddingLeft);
-            const tabRect      = resultTab.getBoundingClientRect();
-            const tabAbsTop    = tabRect.top + scrollY;
-            const tabLeft      = tabRect.left;
-            const naturalWidth = resultTab.offsetWidth - 2 * maxPad;
-            const range        = vh * 0.5;
-
-            if (scrollExitEnd === null) {
-                const lastImgAbsBot = resultImgs[resultImgs.length - 1].getBoundingClientRect().bottom + scrollY;
-                scrollExitEnd = lastImgAbsBot - vh * 0.5;
-            }
-
-            const scrollEnterStart = tabAbsTop - vh * 0.6;
-            const enterProgress = Math.max(0, Math.min(1, (scrollY - scrollEnterStart) / range));
-            const exitProgress  = Math.max(0, Math.min(1, (scrollExitEnd - scrollY)    / range));
-            const progress = Math.min(enterProgress, exitProgress);
-
-            resultTab.style.paddingLeft  = `${maxPad * (1 - progress)}px`;
-            resultTab.style.paddingRight = `${maxPad * (1 - progress)}px`;
-
-            const width      = naturalWidth + (vw - naturalWidth) * progress;
-            const marginLeft = -tabLeft * progress;
-
-            resultImgs.forEach(el => {
-                if (el.tagName === 'VIDEO') {
-                    const ar        = (el.videoHeight && el.videoWidth) ? el.videoHeight / el.videoWidth : 9 / 16;
-                    const expandedW = Math.min(vh / ar, vw);
-                    const w  = naturalWidth + (expandedW - naturalWidth) * progress;
-                    const h  = w * ar;
-                    const ml = ((vw / 2 - expandedW / 2) - tabLeft) * progress;
-                    el.style.width      = `${w}px`;
-                    el.style.height     = `${h}px`;
-                    el.style.marginLeft = `${ml}px`;
-                    el.style.objectFit  = 'contain';
-                } else {
-                    el.style.width      = `${width}px`;
-                    el.style.marginLeft = `${marginLeft}px`;
-                }
-            });
-
-            if (progress >= 1) {
-                if (!stackCaptured) {
-                    imgAbsTops    = resultImgs.map(el => el.getBoundingClientRect().top + scrollY);
-                    scrollExitEnd = imgAbsTops[imgAbsTops.length - 1] + range;
-                    stackCaptured = true;
-                }
-                resultImgs.forEach((el, i) => {
-                    el.style.transform = `translateY(${Math.max(0, scrollY - imgAbsTops[i])}px)`;
-                });
-            } else {
-                if (stackCaptured) {
-                    resultImgs.forEach(el => { el.style.transform = ''; });
-                    stackCaptured = false;
-                    scrollExitEnd = null;
-                }
-            }
-        }
-
-        let rafPending = false;
-        function onScroll() {
-            if (rafPending) return;
-            rafPending = true;
-            requestAnimationFrame(() => {
-                updateResultExpand();
-                rafPending = false;
-            });
-        }
-        window.addEventListener('scroll', onScroll, { passive: true });
-        updateResultExpand();
-    }
-
-    const resultVideos = [...document.querySelectorAll('.resultMedia video')];
-    if (resultVideos.length > 0) {
-        const readyPromises = resultVideos.map(v =>
-            v.readyState >= 1
-                ? Promise.resolve()
-                : new Promise(resolve => {
-                    v.addEventListener('loadedmetadata', resolve, { once: true });
-                    setTimeout(resolve, 3000);
-                })
-        );
-        Promise.all(readyPromises).then(initResultExpand);
-    } else {
-        initResultExpand();
-    }
-
-
-
     // lunar link
     document.querySelectorAll('.marquee.Lunar').forEach(marquee => {
         marquee.addEventListener('mouseenter', () => {
@@ -414,6 +305,70 @@ function openTab(event, section) {
 document.getElementById("uiuxTab")?.click();
 document.getElementById("projectResultTab")?.click();
 tabReady = true;
+
+
+// result media loading animation
+// shows a spinner over each image/video/iframe until it's actually ready,
+// since Google Drive-hosted media can take a while to fetch
+function initMediaLoading() {
+    document.querySelectorAll('.resultMedia .panel').forEach(el => {
+        const wrap = document.createElement('div');
+        wrap.className = 'mediaWrap';
+        el.parentNode.insertBefore(wrap, el);
+        wrap.appendChild(el);
+
+        const spinner = document.createElement('div');
+        spinner.className = 'mediaSpinner';
+        spinner.innerHTML = '<span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>';
+        wrap.appendChild(spinner);
+
+        const markLoaded = () => wrap.classList.add('mediaLoaded');
+
+        if (el.tagName === 'IMG') {
+            if (el.complete && el.naturalWidth > 0) {
+                markLoaded();
+            } else {
+                el.addEventListener('load', markLoaded, { once: true });
+                el.addEventListener('error', markLoaded, { once: true });
+            }
+        } else if (el.tagName === 'VIDEO') {
+            if (el.readyState >= 2) {
+                markLoaded();
+            } else {
+                el.addEventListener('loadeddata', markLoaded, { once: true });
+                el.addEventListener('error', markLoaded, { once: true });
+            }
+        } else if (el.tagName === 'IFRAME') {
+            el.addEventListener('load', markLoaded, { once: true });
+        }
+    });
+}
+initMediaLoading();
+
+
+// dropdown toggle (e.g. "Image & Text" under graphics)
+function toggleDropdown(header) {
+    const panel = header.nextElementSibling;
+    if (!panel) return;
+
+    const expanded = header.getAttribute('aria-expanded') === 'true';
+    if (expanded) {
+        header.setAttribute('aria-expanded', 'false');
+        panel.style.maxHeight = null;
+    } else {
+        header.setAttribute('aria-expanded', 'true');
+        panel.style.maxHeight = `${panel.scrollHeight}px`;
+    }
+}
+
+document.querySelectorAll('.dropdownToggle').forEach(header => {
+    header.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleDropdown(header);
+        }
+    });
+});
 
 
 

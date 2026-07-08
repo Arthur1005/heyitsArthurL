@@ -45,7 +45,19 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('./assets/font/SpaceGrotesk-Light.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
 
+@font-face {
+  font-family: 'Radience';
+  src: url('./assets/font/RadienceTheCheeseFont-Regular.otf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
 
 
 
@@ -391,14 +403,65 @@ nav a:nth-child(3) { margin-left: auto;}
     font-family: 'Orbitron';
 }
 
+.headerRight {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    margin-top: auto;
+}
+
+.tab > div.dropdownToggle {
+    margin-bottom: 0;
+}
+
+.dropdownToggle {
+    cursor: pointer;
+}
+
+.dropdownArrow {
+    width: 0;
+    height: 0;
+    flex-shrink: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid #1c2b22;
+    transition: transform 0.3s ease;
+}
+
+.dropdownToggle[aria-expanded="true"] .dropdownArrow {
+    transform: rotate(180deg);
+}
+
+.tab > div.dropdownPanel {
+    margin-bottom: 0;
+}
+
+.dropdownPanel {
+    max-height: 0;
+    overflow: hidden;
+    padding-top: 20px;
+    transition: max-height 0.4s ease;
+}
+
+.subProjectLink {
+    display: block;
+    width: 95%;
+    margin-left: auto;
+}
+
+.subProjectLink:not(:last-child) {
+    margin-bottom: 20px;
+}
+
 
 .selectedProjectHeader::after {
   content: "";
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 100%;   
-  height: 80px;   
+  width: 100%;
+  height: 80px;
 
   border-bottom: 2px solid #1c2b22;
   border-right: 2px solid #1c2b22;
@@ -406,11 +469,24 @@ nav a:nth-child(3) { margin-left: auto;}
   pointer-events: none;
 }
 
+.subProjectLink .selectedProjectHeader::after {
+  border-bottom-color: grey;
+  border-right-color: grey;
+}
+
 .viewAll {
     display: flex;
     flex-direction: row;
     align-items: center;
     margin-top: 5%;
+}
+
+.viewAll.centerBtn {
+    justify-content: center;
+}
+
+.viewAll.centerBtn .viewAllBtn {
+    margin-left: 0;
 }
 
 .viewAllBtn {
@@ -656,6 +732,18 @@ footer a {
 
 .footer3 a:nth-child(2) { flex: 0 0 40%;}
 
+.copyrightMark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid currentColor;
+    border-radius: 50%;
+    font-size: 10px;
+    transform: translateY(-1px);
+}
+
 .footerLogo {
   fill: #E9E9E9;
   width: 100%;
@@ -852,13 +940,111 @@ footer a {
 
 
 .tab.result img,
-.tab.result video {
+.tab.result video,
+.tab.result iframe {
   display: block;
-  will-change: width, height, transform, margin-left;
+  width: 100%;
 }
 
-.resultSpacer {
-  height: 50vh;
+.tab.result iframe {
+  aspect-ratio: 16 / 9;
+  border: none;
+}
+
+.mediaWrap {
+  position: relative;
+  width: 80%;
+  margin: 5% auto 5% auto;
+  overflow: hidden;
+  background-color: #ececec;
+}
+
+.mediaWrap:last-child {
+  margin-bottom: 0;
+}
+
+.mediaWrap:not(.mediaLoaded) {
+  aspect-ratio: 16 / 9;
+}
+
+.mediaWrap:not(.mediaLoaded) .panel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+}
+
+.mediaWrap.mediaLoaded .panel {
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.mediaSpinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+}
+
+.mediaSpinner .corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(28, 43, 34, 0.15);
+  animation: cornerChase 1.6s ease-in-out infinite;
+}
+
+.mediaSpinner .corner.tl {
+  top: 0;
+  left: 0;
+  border-right: none;
+  border-bottom: none;
+  border-top-left-radius: 16px;
+  animation-delay: 0s;
+}
+
+.mediaSpinner .corner.tr {
+  top: 0;
+  right: 0;
+  border-left: none;
+  border-bottom: none;
+  border-top-right-radius: 16px;
+  animation-delay: 0.4s;
+}
+
+.mediaSpinner .corner.br {
+  bottom: 0;
+  right: 0;
+  border-left: none;
+  border-top: none;
+  border-bottom-right-radius: 16px;
+  animation-delay: 0.8s;
+}
+
+.mediaSpinner .corner.bl {
+  bottom: 0;
+  left: 0;
+  border-right: none;
+  border-top: none;
+  border-bottom-left-radius: 16px;
+  animation-delay: 1.2s;
+}
+
+.mediaWrap.mediaLoaded .mediaSpinner {
+  display: none;
+}
+
+@keyframes cornerChase {
+  0%, 75%, 100% {
+    border-color: rgba(28, 43, 34, 0.15);
+  }
+  25% {
+    border-color: #cd3e00;
+  }
 }
 
 
@@ -949,6 +1135,8 @@ footer a {
     resize: none;
     font-family: 'SemplicitaProRegular';
     font-size: 16px;
+
+    line-height: 1.6;
 }
 
 .formInput textarea:focus {
@@ -997,7 +1185,6 @@ footer a {
 }
 
 .reachoutRightLink a {
-  color: #1c2b22;
   text-decoration: none;
   font-family: 'OrbitronBold';
 }
@@ -1044,16 +1231,11 @@ footer a {
 
 
 
-
-
-
-
-
 .tab p {
         text-indent: 40px;
-  font-family: 'SemplicitaProRegular';
+  font-family: 'Space Grotesk', 'SemplicitaProRegular';
   letter-spacing: 0.12em;
-  line-height: 30px;
+  line-height: 1.6;
   font-size: clamp(14px, 2.5vw, 20px);
 }
 
@@ -1223,6 +1405,56 @@ td a {
 }
 
 
+:root {
+    --brand-linkedin: #0A66C2;
+
+  /* Core brand color stops */
+  --insta-yellow: #fcaf45;
+  --insta-pink: #e1306c;
+  --insta-purple: #833ab4;
+  --insta-blue: #405de6;
+
+  --brand-instagram-gradient: linear-gradient(
+    45deg,
+    var(--insta-yellow) 0%,
+    var(--insta-pink) 40%,
+    var(--insta-purple) 75%,
+    var(--insta-blue) 100%
+  );
+}
+
+
+.text-linkedin {
+  color: var(--brand-linkedin);
+  font-weight: 600; /* Optional: adds premium visibility to the brand name */
+}
+
+.text-instagram {
+  /* Apply the tokenized gradient to the background layer */
+  background: var(--brand-instagram-gradient);
+  
+  /* Standard clip rules to bind background to text glyphs */
+  background-clip: text;
+  -webkit-background-clip: text;
+  
+  /* Hides native typography fill to reveal the gradient underneath */
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  
+  /* Bold font weight prevents intricate gradients from looking pixelated */
+  font-weight: 700; 
+  display: inline-block;
+}
+
+
+.backlink {
+  font-family: 'SemplicitaPro';
+    text-decoration: none;
+    color: #0D160B;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+}
+
 
 
 
@@ -1230,16 +1462,14 @@ td a {
 
 
 @media (max-width: 768px) {
-  .tab.result img,
-  .tab.result video {
+  .mediaWrap {
     width: 100% !important;
-    height: auto !important;
     margin-left: 0 !important;
-    transform: none !important;
   }
 
-  .resultSpacer {
-    height: 20px;
+  .mediaWrap.mediaLoaded .panel {
+    height: auto !important;
+    transform: none !important;
   }
 
   body {
