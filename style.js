@@ -340,6 +340,12 @@ function initMediaLoading() {
             }
         } else if (el.tagName === 'IFRAME') {
             el.addEventListener('load', markLoaded, { once: true });
+
+            if (el.src.includes('drive.google.com')) {
+                const overlay = document.createElement('div');
+                overlay.className = 'driveOverlay';
+                wrap.appendChild(overlay);
+            }
         }
     });
 }
@@ -401,3 +407,110 @@ if (sideNavCloseBtn && sideNav) {
         window.scrollTo(0, savedScroll);
     };
 }
+
+
+// Page transition
+// a solid circle, matching the custom cursor's colour, enlarges from the
+// click point to cover the outgoing page, then the new page loads already
+// covered and the same circle shrinks back down to reveal it
+(function initPageTransition() {
+    const DURATION    = 600; // ms
+    const COLOR        = '#cd3e00';
+    const STORAGE_KEY  = 'pageTransitionPoint';
+
+    // an inline script in <head> already creates this (pre-covered, no
+    // flash) when a transition is expected; reuse it instead of making a
+    // second one, and only create fresh here for a plain/direct page load
+    let circle = document.getElementById('pageTransitionCircle');
+    if (!circle) {
+        circle = document.createElement('div');
+        circle.id = 'pageTransitionCircle';
+        document.body.appendChild(circle);
+    }
+
+    function distanceToFarthestCorner(x, y) {
+        const dx = Math.max(x, window.innerWidth - x);
+        const dy = Math.max(y, window.innerHeight - y);
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    // COVER: a solid circle grows from the click point until it fully
+    // covers the viewport, hiding the outgoing page
+    function coverPage(x, y, onDone) {
+        const d = distanceToFarthestCorner(x, y) * 2;
+        circle.style.boxShadow  = 'none';
+        circle.style.background = COLOR;
+        circle.style.left   = `${x}px`;
+        circle.style.top    = `${y}px`;
+        circle.style.width  = `${d}px`;
+        circle.style.height = `${d}px`;
+        circle.style.transition = 'none';
+        circle.style.transform = 'translate(-50%, -50%) scale(0)';
+        circle.getBoundingClientRect(); // force reflow before re-enabling transition
+        circle.style.transition = `transform ${DURATION}ms ease`;
+        requestAnimationFrame(() => {
+            circle.style.transform = 'translate(-50%, -50%) scale(1)';
+        });
+        circle.addEventListener('transitionend', function handler() {
+            circle.removeEventListener('transitionend', handler);
+            if (onDone) onDone();
+        }, { once: true });
+    }
+
+    // REVEAL: a transparent hole grows from the click point, letting the
+    // already-loaded page show through. The circle itself is the hole;
+    // a large fixed box-shadow spread keeps everything outside it covered
+    // until the hole itself has grown big enough to reach past the screen.
+    function revealPage(x, y) {
+        const r = distanceToFarthestCorner(x, y);
+        circle.style.background = 'transparent';
+        circle.style.boxShadow  = `0 0 0 ${r}px ${COLOR}`;
+        circle.style.left = `${x}px`;
+        circle.style.top  = `${y}px`;
+        circle.style.transform = 'translate(-50%, -50%)';
+        circle.style.transition = 'none';
+        circle.style.width  = '0px';
+        circle.style.height = '0px';
+        circle.getBoundingClientRect(); // force reflow before re-enabling transition
+        circle.style.transition = `width ${DURATION}ms ease, height ${DURATION}ms ease`;
+        requestAnimationFrame(() => {
+            circle.style.width  = `${r * 2}px`;
+            circle.style.height = `${r * 2}px`;
+        });
+        circle.addEventListener('transitionend', function handler() {
+            circle.removeEventListener('transitionend', handler);
+            circle.style.boxShadow = 'none';
+        }, { once: true });
+    }
+
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    if (stored) {
+        sessionStorage.removeItem(STORAGE_KEY);
+        const [x, y] = stored.split(',').map(Number);
+        revealPage(x, y);
+    }
+
+    function isInternalNavLink(a) {
+        if (!a || a.target === '_blank') return false;
+        const href = a.getAttribute('href');
+        if (!href) return false;
+        if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) return false;
+        if (/^https?:\/\//i.test(href) && !href.startsWith(window.location.origin)) return false;
+        return true;
+    }
+
+    document.addEventListener('click', (e) => {
+        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        const a = e.target.closest('a');
+        if (!isInternalNavLink(a)) return;
+
+        e.preventDefault();
+        const href = a.getAttribute('href');
+        const x = e.clientX;
+        const y = e.clientY;
+        sessionStorage.setItem(STORAGE_KEY, `${x},${y}`);
+        coverPage(x, y, () => {
+            window.location.href = href;
+        });
+    });
+})();

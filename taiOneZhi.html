@@ -29,6 +29,32 @@
         sizes="96x96"
         media="(prefers-color-scheme: dark)" />
     <link rel="stylesheet" href="style.css">
+    <script>
+    (function () {
+        var p = sessionStorage.getItem('pageTransitionPoint');
+        if (!p) return;
+        var parts = p.split(',');
+        var x = parseFloat(parts[0]);
+        var y = parseFloat(parts[1]);
+        var dx = Math.max(x, window.innerWidth - x);
+        var dy = Math.max(y, window.innerHeight - y);
+        var r = Math.sqrt(dx * dx + dy * dy);
+        var c = document.createElement('div');
+        c.id = 'pageTransitionCircle';
+        c.style.position = 'fixed';
+        c.style.left = x + 'px';
+        c.style.top = y + 'px';
+        c.style.width = '0px';
+        c.style.height = '0px';
+        c.style.borderRadius = '50%';
+        c.style.transform = 'translate(-50%, -50%)';
+        c.style.background = 'transparent';
+        c.style.boxShadow = '0 0 0 ' + r + 'px #cd3e00';
+        c.style.zIndex = '99999';
+        c.style.pointerEvents = 'none';
+        document.documentElement.appendChild(c);
+    })();
+    </script>
 </head>
 <body>
     <header class="nav">
@@ -59,7 +85,7 @@
 
             <div class="projectRoleTime">
                 <h1>Designer</h1>
-                <h1>2026</h1>
+                <h1>Jun 2026</h1>
             </div>
         </div>
 
@@ -83,38 +109,7 @@
                     <h1>///</h1>
                 </div>
                 <div>
-                    <p>Add a short project overview here.</p>
-                </div>
-            </div>
-
-            <div class="style2">
-                <div class="projectSubTitle">
-                    <h1>Research & Background</h1>
-                    <h1>///</h1>
-                </div>
-                <div class="styleSideBySide">
-                    <div>
-                        <p>Add background / research notes here.</p>
-                        <hr>
-                        <p>Add more detail here.</p>
-                    </div>
-                    <!-- <img src="./assets/img/taiOneZhi_concept1.png" alt="臺ONE誌 image"> -->
-                </div>
-            </div>
-
-            <div class="style3">
-                <div class="projectSubTitle">
-                    <h1>Examples of Design Task</h1>
-                    <h1>///</h1>
-                </div>
-                <div class="style3Content">
-                    <h3>1. Task Name</h3>
-                    <div class="styleSideBySide">
-                        <div>
-                            <p>Describe a design task here.</p>
-                        </div>
-                        <!-- <img src="./assets/img/taiOneZhi_concept2.png" alt="design task example"> -->
-                    </div>
+                    <p>Born from a desire to make social issues more accessible to younger generations, 臺ONE誌 was created as an activism-driven media brand that connects Taiwanese youth with conversations around identity, culture, and social awareness. The project began by defining the brand’s position through research and auditing, followed by the development of a visual identity system that includes the logo, character design, brand personality, and consistent visual elements. This process resulted in comprehensive brand guidelines that establish a cohesive and engaging identity across different platforms.</p>
                 </div>
             </div>
 

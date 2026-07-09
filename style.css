@@ -375,6 +375,7 @@ nav a:nth-child(3) { margin-left: auto;}
 
 
 .selectedProjectHeader {
+  --titleSize: clamp(20px, 5vw, 36px);
   position: relative;
   padding: clamp(30px, 3vw, 40px) clamp(0px, 3vw, 60px);
   color: #1c2b22;
@@ -387,7 +388,7 @@ nav a:nth-child(3) { margin-left: auto;}
 }
 
 .selectedProjectHeader h1 {
-  font-size: 36px;
+  font-size: var(--titleSize);
   font-weight: bold;
 }
 
@@ -408,7 +409,8 @@ nav a:nth-child(3) { margin-left: auto;}
     flex-direction: row;
     align-items: center;
     gap: 12px;
-    margin-top: auto;
+    align-self: center;
+    font-size: var(--titleSize);
 }
 
 .tab > div.dropdownToggle {
@@ -417,15 +419,16 @@ nav a:nth-child(3) { margin-left: auto;}
 
 .dropdownToggle {
     cursor: pointer;
+    padding-right: 6%;
 }
 
 .dropdownArrow {
     width: 0;
     height: 0;
     flex-shrink: 0;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 8px solid #1c2b22;
+    border-left: 0.167em solid transparent;
+    border-right: 0.167em solid transparent;
+    border-top: 0.222em solid #1c2b22;
     transition: transform 0.3s ease;
 }
 
@@ -806,7 +809,7 @@ footer a {
   border: none;
   background-color: transparent;
   font-size: clamp(14px, 2.5vw, 20px);
-  margin-right: 4%;
+  margin-right: clamp(16px, 4vw, 40px);
 }
 
 .fact {
@@ -1047,6 +1050,18 @@ footer a {
   }
 }
 
+/* blocks the "open in Google Drive" icon Drive renders on its embedded
+   video player; the icon lives in a cross-origin frame we can't reach
+   otherwise, so this just covers the corner it sits in */
+.driveOverlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 52px;
+  height: 52px;
+  background: #000;
+}
+
 
 .reachOutSection {
   width: 100vw;
@@ -1194,21 +1209,28 @@ footer a {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 4%;
 }
 
 .projectTop > .projectsCate {
-  margin-top: auto;
+  margin-top: unset;
   margin-bottom: unset;
 }
 
 .projectTop > .projectsCate button{
-  margin-right: 30%;
-
+  margin-right: clamp(24px, 8vw, 80px);
 }
 
 .projectRoleTime {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   text-align: right;
+}
+
+.projectRoleTime h1:last-child {
+  font-size: clamp(13px, 2vw, 16px);
 }
 
 .projectSubTitle {
@@ -1552,9 +1574,6 @@ td a {
     }
 
 
-  .selectedProjectHeader h1 {
-    font-size: clamp(20px, 2.5vw, 30px);
-  }
 
   .mobilePageHeader {
     display: block;
@@ -1890,4 +1909,20 @@ hr {
 
 
 
+}
+
+/* Page transition — a solid circle (matching the cursor's colour) that
+   grows from the click point to cover the page, then shrinks back down
+   to reveal the next page on load */
+#pageTransitionCircle {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background-color: #cd3e00;
+  transform: translate(-50%, -50%) scale(0);
+  pointer-events: none;
+  z-index: 99999;
 }

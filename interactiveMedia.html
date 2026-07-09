@@ -29,6 +29,32 @@
         sizes="96x96"
         media="(prefers-color-scheme: dark)" />
     <link rel="stylesheet" href="style.css">
+    <script>
+    (function () {
+        var p = sessionStorage.getItem('pageTransitionPoint');
+        if (!p) return;
+        var parts = p.split(',');
+        var x = parseFloat(parts[0]);
+        var y = parseFloat(parts[1]);
+        var dx = Math.max(x, window.innerWidth - x);
+        var dy = Math.max(y, window.innerHeight - y);
+        var r = Math.sqrt(dx * dx + dy * dy);
+        var c = document.createElement('div');
+        c.id = 'pageTransitionCircle';
+        c.style.position = 'fixed';
+        c.style.left = x + 'px';
+        c.style.top = y + 'px';
+        c.style.width = '0px';
+        c.style.height = '0px';
+        c.style.borderRadius = '50%';
+        c.style.transform = 'translate(-50%, -50%)';
+        c.style.background = 'transparent';
+        c.style.boxShadow = '0 0 0 ' + r + 'px #cd3e00';
+        c.style.zIndex = '99999';
+        c.style.pointerEvents = 'none';
+        document.documentElement.appendChild(c);
+    })();
+    </script>
 </head>
 <body>
     <header class="nav">
@@ -59,13 +85,20 @@
 
             <div class="projectRoleTime">
                 <h1>Designer</h1>
-                <h1>2026</h1>
+                <h1>Jun 2026</h1>
             </div>
         </div>
 
 
         <div id="projectResult" class="tab result" role="tabpanel" aria-labelledby="projectResult">
             <div class="resultMedia" style="margin-bottom: 10%;">
+                <video controls playsinline preload="metadata" width="100%" class="panel">
+                    <source src="./assets/video/interactiveMedia.webm" type="video/webm">
+                </video>
+                <video controls playsinline preload="metadata" width="100%" class="panel">
+                    <source src="./assets/video/IMG_9381.webm" type="video/webm">
+                    <source src="./assets/video/IMG_9381.webm" type="video/quicktime">
+                </video>
                 <img src="https://drive.google.com/thumbnail?id=1iOCgGleLPBtgqhAR7aji3YfGaTAdzRsX&sz=s2400" width="100%" class="panel" alt="Interactive Media result Image 1">
                 <img src="https://drive.google.com/thumbnail?id=1hHmviBQ1EVmH6Od_1O9pRU55aZdCUXPr&sz=s2400" width="100%" class="panel" alt="Interactive Media result Image 2">
                 <img src="https://drive.google.com/thumbnail?id=1eywkThZslLOQxY_GPpkafqcTNctPPrRq&sz=s2400" width="100%" class="panel" alt="Interactive Media result Image 3">
@@ -73,8 +106,6 @@
                 <img src="https://drive.google.com/thumbnail?id=1-_7maeEvzCqFHtXPuOzk-537Www2eCrE&sz=s2400" width="100%" class="panel" alt="Interactive Media result Image 5">
                 <img src="https://drive.google.com/thumbnail?id=1eTaUPZDVtXuaj1tVUA27bzYQB9QXBFJh&sz=s2400" width="100%" class="panel" alt="Interactive Media result Image 6">
                 <img src="https://drive.google.com/thumbnail?id=1jg1_IeKncwiSu4stGF1Eb1WyyXaVJCIu&sz=s2400" width="100%" class="panel" alt="Interactive Media result Image 7">
-                <iframe src="https://drive.google.com/file/d/1PCY0IuZGpxyaEryK6cm_Kk8m0UMML8TQ/preview" class="panel" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
-                <iframe src="https://drive.google.com/file/d/1nJ1BQ-jVfR7zPMQpT1HtW-WhAgphVOSA/preview" class="panel" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
             </div>
         </div>
 
@@ -86,38 +117,7 @@
                     <h1>///</h1>
                 </div>
                 <div>
-                    <p>Add a short project overview here.</p>
-                </div>
-            </div>
-
-            <div class="style2">
-                <div class="projectSubTitle">
-                    <h1>Research & Background</h1>
-                    <h1>///</h1>
-                </div>
-                <div class="styleSideBySide">
-                    <div>
-                        <p>Add background / research notes here.</p>
-                        <hr>
-                        <p>Add more detail here.</p>
-                    </div>
-                    <!-- <img src="./assets/img/interactiveMedia_concept1.png" alt="Interactive Media image"> -->
-                </div>
-            </div>
-
-            <div class="style3">
-                <div class="projectSubTitle">
-                    <h1>Examples of Design Task</h1>
-                    <h1>///</h1>
-                </div>
-                <div class="style3Content">
-                    <h3>1. Task Name</h3>
-                    <div class="styleSideBySide">
-                        <div>
-                            <p>Describe a design task here.</p>
-                        </div>
-                        <!-- <img src="./assets/img/interactiveMedia_concept2.png" alt="design task example"> -->
-                    </div>
+                    <p>A digital interaction that explores the fragile boundary between isolation and connection. The experience places the audience in the position of someone who is emotionally overwhelmed and does not want to be disturbed, while questioning how far care and curiosity can reach before they become intrusion. Through interactive responses, the project examines the tension between wanting to be understood and wanting to remain untouched, asking: how close can someone get before their presence becomes too much?</p>
                 </div>
             </div>
 
