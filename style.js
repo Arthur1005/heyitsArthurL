@@ -490,6 +490,20 @@ if (sideNavCloseBtn && sideNav) {
         revealPage(x, y);
     }
 
+    // if this page is restored from the back/forward cache (e.g. the user
+    // hit the browser's back button after we finished covering it right
+    // before navigating away), scripts don't re-run — so force the circle
+    // back to its hidden state instantly instead of leaving it stuck covering
+    window.addEventListener('pageshow', (e) => {
+        if (!e.persisted) return;
+        circle.style.transition = 'none';
+        circle.style.boxShadow  = 'none';
+        circle.style.background = 'transparent';
+        circle.style.width  = '0px';
+        circle.style.height = '0px';
+        circle.style.transform = 'translate(-50%, -50%) scale(0)';
+    });
+
     function isInternalNavLink(a) {
         if (!a || a.target === '_blank') return false;
         const href = a.getAttribute('href');
