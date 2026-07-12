@@ -10,6 +10,10 @@
 
 const matrixChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzアイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン的一是不了人我在有他這為之大來以個中上們到說國和地也子時道出而要於就下得可你年生自會那後能對著事其裡所去行過家十用發天如然作方成者多日都三小軍二無同麼經法當起與好看學進種將還分此心前面又定見只主沒公從$@#%&*+=<>?/\\|[]{}';
 
+// shared mobile check — matches the site's existing 768px CSS breakpoint,
+// used to skip the mouse-follow cursor and tab-swipe carousel on mobile
+const isMobileViewport = window.matchMedia('(max-width: 768px)').matches;
+
 function startMatrixStreams() {
     createMatrixStream();
 
@@ -20,26 +24,28 @@ function startMatrixStreams() {
 let mouseX = 0;
 let mouseY = 0;
 let isOverMarquee = false;
-document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
+if (!isMobileViewport) {
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
 
-    const cursorGlow = document.getElementById('cursorGlow');
-    if (cursorGlow) {
-        cursorGlow.style.left = mouseX + 'px';
-        cursorGlow.style.top = mouseY + 'px';
-    }
+        const cursorGlow = document.getElementById('cursorGlow');
+        if (cursorGlow) {
+            cursorGlow.style.left = mouseX + 'px';
+            cursorGlow.style.top = mouseY + 'px';
+        }
 
-    const customCursor = document.getElementById('customCursor');
-    if (customCursor) {
-        customCursor.style.left = mouseX + 'px';
-        customCursor.style.top = mouseY + 'px';
-    }
+        const customCursor = document.getElementById('customCursor');
+        if (customCursor) {
+            customCursor.style.left = mouseX + 'px';
+            customCursor.style.top = mouseY + 'px';
+        }
 
-    if (!isOverMarquee) {
-        createCursorTrail(mouseX, mouseY);
-    }
-});
+        if (!isOverMarquee) {
+            createCursorTrail(mouseX, mouseY);
+        }
+    });
+}
 
 let lastTrailTime = 0;
 function createCursorTrail(x, y) {
@@ -72,12 +78,15 @@ window.addEventListener('load', () => {
     const cursorGlow = document.createElement('div');
     cursorGlow.id = 'cursorGlow';
     cursorGlow.className = 'cursorGlow';
-    document.body.appendChild(cursorGlow);
 
     const customCursor = document.createElement('div');
     customCursor.id = 'customCursor';
     customCursor.className = 'customCursor';
-    document.body.appendChild(customCursor);
+
+    if (!isMobileViewport) {
+        document.body.appendChild(cursorGlow);
+        document.body.appendChild(customCursor);
+    }
 
     if (document.getElementById('landingTitle')) {
         startMatrixStreams();
@@ -358,6 +367,8 @@ initMediaLoading();
 // once the finger lifts. Reuses the existing openTab click handler to
 // finalise state so it stays identical to tapping a tab button.
 function initSwipeableTabs() {
+    if (isMobileViewport) return;
+
     const cate = document.querySelector('.projectsCate');
     const container = document.getElementById('projectsSection');
     if (!cate || !container) return;
