@@ -352,6 +352,55 @@ function initMediaLoading() {
 initMediaLoading();
 
 
+// swipeable tabs (mobile) — swipe left/right over the project content to
+// move between tabs (result/concept, or ui/ux/graphics/others), reusing
+// the existing openTab click handler so behaviour stays identical
+function initSwipeableTabs() {
+    const cate = document.querySelector('.projectsCate');
+    const container = document.getElementById('projectsSection');
+    if (!cate || !container) return;
+
+    const tabs = Array.from(cate.querySelectorAll('.tablinks'));
+    if (tabs.length < 2) return;
+
+    const SWIPE_THRESHOLD = 60;
+    let startX = 0;
+    let startY = 0;
+    let tracking = false;
+
+    container.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        tracking = true;
+    }, { passive: true });
+
+    container.addEventListener('touchend', (e) => {
+        if (!tracking) return;
+        tracking = false;
+
+        const touch = e.changedTouches[0];
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+
+        if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+
+        const activeIndex = tabs.findIndex(btn => btn.classList.contains('active'));
+        if (activeIndex === -1) return;
+
+        let nextIndex = activeIndex;
+        if (dx < 0 && activeIndex < tabs.length - 1) {
+            nextIndex = activeIndex + 1;
+        } else if (dx > 0 && activeIndex > 0) {
+            nextIndex = activeIndex - 1;
+        }
+
+        if (nextIndex !== activeIndex) tabs[nextIndex].click();
+    }, { passive: true });
+}
+initSwipeableTabs();
+
+
 // dropdown toggle (e.g. "Image & Text" under graphics)
 function toggleDropdown(header) {
     const panel = header.nextElementSibling;

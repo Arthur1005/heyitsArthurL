@@ -1083,7 +1083,8 @@ footer a {
 
 .tablinks.active {
   font-weight: bold;
-  text-decoration: 3px underline;
+  text-decoration-line: underline;
+  text-decoration-thickness: 3px;
   text-underline-offset: 10px;
 }
 
