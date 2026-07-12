@@ -352,9 +352,11 @@ function initMediaLoading() {
 initMediaLoading();
 
 
-// swipeable tabs (mobile) — swipe left/right over the project content to
-// move between tabs (result/concept, or ui/ux/graphics/others), reusing
-// the existing openTab click handler so behaviour stays identical
+// swipeable tabs (mobile) — dragging over the project content follows the
+// finger, sliding the current tab out and the neighbouring tab in (so a
+// half-swipe shows half of the next tab), snapping to whichever side wins
+// once the finger lifts. Reuses the existing openTab click handler to
+// finalise state so it stays identical to tapping a tab button.
 function initSwipeableTabs() {
     const cate = document.querySelector('.projectsCate');
     const container = document.getElementById('projectsSection');
@@ -363,39 +365,179 @@ function initSwipeableTabs() {
     const tabs = Array.from(cate.querySelectorAll('.tablinks'));
     if (tabs.length < 2) return;
 
-    const SWIPE_THRESHOLD = 60;
+    const panels = tabs.map(btn => document.getElementById(btn.getAttribute('aria-controls')));
+
+    const DIRECTION_LOCK_PX = 10;
+    const COMMIT_RATIO = 0.25;
+
     let startX = 0;
     let startY = 0;
-    let tracking = false;
+    let dragging = false;
+    let horizontal = null;
+    let activeIndex = -1;
+    let activePanel = null;
+    let targetIndex = -1;
+    let targetPanel = null;
+    let spacer = null;
+    let viewportWidth = 0;
+
+    function resetPanel(panel) {
+        if (!panel) return;
+        panel.style.position = '';
+        panel.style.top = '';
+        panel.style.left = '';
+        panel.style.width = '';
+        panel.style.maxHeight = '';
+        panel.style.overflow = '';
+        panel.style.margin = '';
+        panel.style.zIndex = '';
+        panel.style.transform = '';
+        panel.style.transition = '';
+        panel.style.pointerEvents = '';
+        panel.style.display = '';
+    }
+
+    function mountActivePanel() {
+        const rect = activePanel.getBoundingClientRect();
+        spacer = document.createElement('div');
+        spacer.style.height = rect.height + 'px';
+        activePanel.parentNode.insertBefore(spacer, activePanel);
+
+        viewportWidth = rect.width;
+        activePanel.style.position = 'fixed';
+        activePanel.style.top = rect.top + 'px';
+        activePanel.style.left = rect.left + 'px';
+        activePanel.style.width = rect.width + 'px';
+        activePanel.style.margin = '0';
+        activePanel.style.zIndex = '10';
+        activePanel.style.transition = 'none';
+        return rect;
+    }
+
+    function mountTargetPanel(rect) {
+        targetPanel.style.display = 'block';
+        targetPanel.style.position = 'fixed';
+        targetPanel.style.top = rect.top + 'px';
+        targetPanel.style.left = rect.left + 'px';
+        targetPanel.style.width = rect.width + 'px';
+        targetPanel.style.maxHeight = rect.height + 'px';
+        targetPanel.style.overflow = 'hidden';
+        targetPanel.style.margin = '0';
+        targetPanel.style.zIndex = '9';
+        targetPanel.style.pointerEvents = 'none';
+        targetPanel.style.transition = 'none';
+    }
+
+    function finish(commit) {
+        const ap = activePanel;
+        const tp = targetPanel;
+        const ti = targetIndex;
+        const sp = spacer;
+        if (!ap) return;
+
+        const done = () => {
+            resetPanel(ap);
+            resetPanel(tp);
+            if (sp) sp.remove();
+            if (commit && ti !== -1) tabs[ti].click();
+        };
+
+        // force a reflow so the browser commits the current drag position
+        // (still under transition:none) before we enable the transition —
+        // otherwise the synchronous style writes below can get coalesced
+        // and the transition (and its transitionend event) never fires
+        ap.getBoundingClientRect();
+        if (tp) tp.getBoundingClientRect();
+
+        ap.style.transition = 'transform 250ms ease';
+        if (tp) tp.style.transition = 'transform 250ms ease';
+
+        requestAnimationFrame(() => {
+            if (tp) {
+                const dir = ti > activeIndex ? 1 : -1;
+                if (commit) {
+                    ap.style.transform = `translateX(${-dir * viewportWidth}px)`;
+                    tp.style.transform = 'translateX(0px)';
+                } else {
+                    ap.style.transform = 'translateX(0px)';
+                    tp.style.transform = `translateX(${dir * viewportWidth}px)`;
+                }
+                tp.addEventListener('transitionend', done, { once: true });
+            } else {
+                ap.style.transform = 'translateX(0px)';
+                ap.addEventListener('transitionend', done, { once: true });
+            }
+        });
+
+        activePanel = null;
+        targetPanel = null;
+        targetIndex = -1;
+        spacer = null;
+    }
 
     container.addEventListener('touchstart', (e) => {
-        if (e.touches.length !== 1) return;
+        if (e.touches.length !== 1 || dragging) return;
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
-        tracking = true;
+        dragging = true;
+        horizontal = null;
+        activeIndex = tabs.findIndex(btn => btn.classList.contains('active'));
+        activePanel = null;
+        targetPanel = null;
+        targetIndex = -1;
     }, { passive: true });
 
-    container.addEventListener('touchend', (e) => {
-        if (!tracking) return;
-        tracking = false;
+    container.addEventListener('touchmove', (e) => {
+        if (!dragging || e.touches.length !== 1 || activeIndex === -1) return;
+        const dx = e.touches[0].clientX - startX;
+        const dy = e.touches[0].clientY - startY;
 
-        const touch = e.changedTouches[0];
-        const dx = touch.clientX - startX;
-        const dy = touch.clientY - startY;
+        if (horizontal === null) {
+            if (Math.abs(dx) < DIRECTION_LOCK_PX && Math.abs(dy) < DIRECTION_LOCK_PX) return;
+            horizontal = Math.abs(dx) > Math.abs(dy);
+            if (!horizontal) return;
+        }
+        if (!horizontal) return;
 
-        if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+        e.preventDefault();
 
-        const activeIndex = tabs.findIndex(btn => btn.classList.contains('active'));
-        if (activeIndex === -1) return;
+        const dir = dx < 0 ? 1 : -1;
+        const wantIndex = activeIndex + dir;
+        const hasTarget = wantIndex >= 0 && wantIndex < tabs.length;
 
-        let nextIndex = activeIndex;
-        if (dx < 0 && activeIndex < tabs.length - 1) {
-            nextIndex = activeIndex + 1;
-        } else if (dx > 0 && activeIndex > 0) {
-            nextIndex = activeIndex - 1;
+        if (!activePanel) {
+            activePanel = panels[activeIndex];
+            const rect = mountActivePanel();
+            if (hasTarget) {
+                targetIndex = wantIndex;
+                targetPanel = panels[targetIndex];
+                mountTargetPanel(rect);
+            }
         }
 
-        if (nextIndex !== activeIndex) tabs[nextIndex].click();
+        if (targetPanel) {
+            const tdir = targetIndex > activeIndex ? 1 : -1;
+            activePanel.style.transform = `translateX(${dx}px)`;
+            targetPanel.style.transform = `translateX(${dx + tdir * viewportWidth}px)`;
+        } else {
+            // at an edge with no neighbour — light rubber-band feedback
+            activePanel.style.transform = `translateX(${dx * 0.3}px)`;
+        }
+    }, { passive: false });
+
+    container.addEventListener('touchend', (e) => {
+        if (!dragging) return;
+        dragging = false;
+        if (!activePanel) return;
+
+        const dx = e.changedTouches[0].clientX - startX;
+        const commit = !!targetPanel && Math.abs(dx) > viewportWidth * COMMIT_RATIO;
+        finish(commit);
+    }, { passive: true });
+
+    container.addEventListener('touchcancel', () => {
+        dragging = false;
+        if (activePanel) finish(false);
     }, { passive: true });
 }
 initSwipeableTabs();

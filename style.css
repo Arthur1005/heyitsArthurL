@@ -1097,6 +1097,7 @@ footer a {
 
 #projectsSection {
   margin-bottom: unset;
+  touch-action: pan-y;
 }
 
 .reachoutContent{
