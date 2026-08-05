@@ -1591,6 +1591,7 @@ h3 {
 .reflectionSlides {
   display: grid;
   overflow: hidden;
+  touch-action: pan-y;
 }
 
 .reflectionSlide {
