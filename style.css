@@ -156,7 +156,7 @@ a {
     border-radius: 50%;
     background: radial-gradient(circle, rgba(20, 86, 184, 0) 0%, transparent 70%);
     pointer-events: none;
-    z-index: 9999;
+    z-index: 10001;
     transform: translate(-50%, -50%);
     transition: opacity 0.3s ease;
 }
@@ -178,10 +178,12 @@ body {
     padding: clamp(10px, 2vw, 20px) !important;
     background-color: #F5F5F5;
     overflow-x: hidden;
+    overflow-x: clip;
 }
 
 html {
     overflow-x: hidden;
+    overflow-x: clip;
     max-width: 100%;
 }
 
@@ -196,11 +198,13 @@ a, button, input, textarea {
     border: 1px solid rgba(205, 62, 0, 1);
     border-radius: 100%;
     pointer-events: none;
+    z-index: 10001;
     transform: translate(-50%, -50%);
     transition: width 0.3s ease, height 0.3s ease, border 0.3s ease, background-color 0.3s ease;
 }
 
-.customCursor.marqueeHover {
+.customCursor.marqueeHover,
+.customCursor.textHover {
     width: auto;
     height: auto;
     padding: 8px 16px;
@@ -1046,6 +1050,30 @@ footer a {
   display: none;
 }
 
+/* .flowRatioImg marks a .resultMedia panel that should match
+   .flowImageHolder's size and placement (full-width, not .mediaWrap's
+   usual 80%-wide auto-centered box) and ratio (1980:1080 instead of
+   .mediaWrap's 16:9 loading placeholder / fall-back-to-intrinsic-size
+   once loaded) — scoped with :has() so it only affects wraps around a
+   marked image, not every other page's .resultMedia */
+.mediaWrap:has(.flowRatioImg) {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  aspect-ratio: 1980 / 1080;
+  /* profileEdit1/2.png have transparent (not white) corners outside their
+     rounded-rect mockup frames, so .mediaWrap's default grey loading
+     placeholder shows through there — match the site's own background
+     instead so it reads as sitting on the page, not in a white box */
+  background-color: #F5F5F5;
+}
+
+.mediaWrap:has(.flowRatioImg) .panel {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 @keyframes cornerChase {
   0%, 75%, 100% {
     border-color: rgba(28, 43, 34, 0.15);
@@ -1240,6 +1268,146 @@ footer a {
   font-size: clamp(13px, 2vw, 16px);
 }
 
+/* Case-study sidebar layout (Circula) — vertical "progress bar" nav on the
+   left, scroll-spied against a single continuous content column */
+.caseStudyLayout {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: clamp(24px, 4vw, 64px);
+  margin-top: 4%;
+  /* matches .reachOutSection's own 10% margin-bottom exactly, since both
+     resolve against the same containing block (.selectedProjectSection) —
+     .caseStudySection:last-child's own 10% margin (below) is zeroed out
+     so the two don't stack into double the intended gap */
+  margin-bottom: 10%;
+}
+
+.caseStudyNav {
+  position: sticky;
+  top: 50vh; /* fallback until JS refines this to account for the nav's own height */
+  flex-shrink: 0;
+  width: clamp(180px, 20vw, 260px);
+}
+
+.caseStudyNav > ul {
+  list-style: none;
+  position: relative;
+  padding-left: 20px;
+}
+
+.caseStudyNav > ul::before {
+  content: '';
+  position: absolute;
+  left: 3.5px;
+  top: 10.5px;
+  bottom: 9.5px;
+  width: 1px;
+  background: rgba(28, 43, 34, 0.15);
+}
+
+.caseStudyNavItem {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.caseStudyDot {
+  position: absolute;
+  left: -20px;
+  top: 10.5px;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(28, 43, 34, 0.3);
+  background: #F5F5F5;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.caseStudyNavItem > a {
+  display: inline-block;
+  font-family: 'Orbitron';
+  font-size: clamp(12px, 1.4vw, 15px);
+  color: rgba(28, 43, 34, 0.45);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.caseStudyNavItem > a:hover {
+  color: #cd3e00;
+}
+
+.caseStudyNavItem.active > .caseStudyDot {
+  background: #1c2b22;
+  border-color: #1c2b22;
+}
+
+.caseStudyNavItem.active > a {
+  color: #1c2b22;
+  font-weight: bold;
+}
+
+.caseStudySubNav {
+  list-style: none;
+  max-height: 0;
+  overflow: hidden;
+  padding-left: 16px;
+  margin-top: 0;
+  transition: max-height 0.35s ease, margin-top 0.35s ease;
+}
+
+.caseStudyNavItem.active > .caseStudySubNav {
+  max-height: 240px;
+  margin-top: 8px;
+}
+
+.caseStudySubNav li {
+  margin-bottom: 6px;
+}
+
+.caseStudySubNav a {
+  font-family: 'Orbitron';
+  font-size: clamp(11px, 1.2vw, 13px);
+  color: rgba(28, 43, 34, 0.4);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.caseStudySubNav a:hover {
+  color: #cd3e00;
+}
+
+.caseStudyContent > .caseStudySection:first-child .projectSubTitle {
+  margin-top: 0;
+}
+
+.caseStudyContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.caseStudySection {
+  scroll-margin-top: 24px;
+  margin-bottom: 10%;
+}
+
+.caseStudyContent > .caseStudySection:last-child {
+  margin-bottom: 0;
+}
+
+.caseStudyContent p {
+  text-indent: 40px;
+  font-family: 'Space Grotesk', 'SemplicitaProRegular';
+  letter-spacing: 0.12em;
+  line-height: 1.6;
+  font-size: clamp(14px, 2.5vw, 20px);
+}
+
+.caseStudyPlaceholder p {
+  text-indent: 0;
+  color: #1c2b22;
+}
+
 .projectSubTitle {
     display: flex;
     flex-direction: row;
@@ -1252,6 +1420,7 @@ footer a {
 
 .projectSubTitle h1 {
   font-size: clamp(16px, 2.5vw, 20px);
+  font-weight: bold;
 }
 
 .projectRoleTime h1 {
@@ -1308,6 +1477,375 @@ h3 {
 
 .style3 h3 {
   margin-top: 10%;
+}
+
+.style3Content h3 {
+  color: rgba(28, 43, 34, 0.35);
+  transition: color 0.3s ease;
+}
+
+.style3Content h3.active {
+  color: #1c2b22;
+}
+
+.caseStudySubNav a.active {
+  color: #1c2b22;
+  font-weight: bold;
+}
+
+/* brief orange glow confirming arrival after a sidebar nav click —
+   text-shadow inherits, so this lights up both h1s in .projectSubTitle
+   (or an h3) without needing to target them individually */
+@keyframes caseStudyArrivalShine {
+  0% { text-shadow: 0 0 0 rgba(205, 62, 0, 0); }
+  35% { text-shadow: 0 0 16px rgba(205, 62, 0, 0.8); }
+  100% { text-shadow: 0 0 0 rgba(205, 62, 0, 0); }
+}
+
+.caseStudyArrived {
+  animation: caseStudyArrivalShine 0.9s ease;
+}
+
+/* step list — a numbered sequence where each row's bar lights up orange
+   as it scrolls through, mirroring the sidebar's own active-dot pattern */
+.stepList {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2.5vw, 28px);
+}
+
+.stepItem {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: clamp(16px, 3vw, 28px);
+}
+
+.stepBar {
+  flex-shrink: 0;
+  width: 8px;
+  border-radius: 2px;
+  background: rgba(28, 43, 34, 0.15);
+  transition: background-color 0.3s ease;
+}
+
+.stepItem.active .stepBar {
+  background: #cd3e00;
+}
+
+.checkIcon {
+  flex-shrink: 0;
+  align-self: center;
+  width: 22px;
+  height: 22px;
+}
+
+.checkIconCircle {
+  fill: rgba(28, 43, 34, 0.15);
+  transition: fill 0.3s ease;
+}
+
+.stepItem.completed .checkIconCircle {
+  fill: #34C759;
+}
+
+/* reflection carousel — a segmented progress bar (tabs) where each
+   segment is one paragraph; only the active paragraph is shown, the
+   rest are cross-faded/slid out via CSS grid stacking (all slides share
+   one grid cell, so the container auto-sizes to the tallest one with no
+   layout jump when switching) */
+.reflectionTabs {
+  display: flex;
+  gap: 8px;
+  margin-top: clamp(20px, 3vw, 32px);
+}
+
+.reflectionTab {
+  flex: 1;
+  height: 4px;
+  border: none;
+  border-radius: 2px;
+  background: rgba(28, 43, 34, 0.15);
+  padding: 0;
+  cursor: none;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.reflectionTab:hover {
+  background: rgba(205, 62, 0, 0.5);
+  transform: scaleY(1.8);
+}
+
+.reflectionTab.active {
+  background: #cd3e00;
+  transform: scaleY(1.8);
+}
+
+.reflectionSlides {
+  display: grid;
+  overflow: hidden;
+}
+
+.reflectionSlide {
+  grid-area: 1 / 1;
+  margin: 0;
+  opacity: 0;
+  transform: translateX(24px);
+  transition: transform 0.4s ease, opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.reflectionSlide.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.reflectionSlide.exiting {
+  transform: translateX(-24px);
+}
+
+/* same title treatment as the Key UX / Interaction details step titles
+   (Orbitron, not bold, sized like a heading) — duplicated here rather
+   than sharing that ID-scoped selector, since this lives outside
+   #cs-design-decision */
+.reflectionTitle {
+  font-family: 'Orbitron' !important;
+  font-weight: normal;
+  font-size: clamp(16px, 2.5vw, 20px) !important;
+  margin-top: 0;
+  margin-bottom: clamp(12px, 2vw, 18px);
+  text-indent: 0 !important;
+}
+
+.stepItemBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.stepItemBody p {
+  text-indent: 0 !important;
+}
+
+/* marks each Design Decision step's short description as that item's
+   title (image, then title, then a later elaboration paragraph) —
+   Orbitron + size match every other heading on the site, so it reads as
+   an actual heading rather than emphasized body text. :first-of-type
+   (not :first-child) since the image slot now comes before it in the
+   DOM. Scoped to the whole Design Decision section (Key UX + Interaction
+   details) so both stay in sync */
+#cs-design-decision .stepItemBody p:first-of-type {
+  font-family: 'Orbitron';
+  font-weight: normal;
+  font-size: clamp(16px, 2.5vw, 20px);
+  margin-top: clamp(16px, 2.5vw, 24px);
+  margin-bottom: clamp(16px, 2.5vw, 24px);
+}
+
+#cs-design-decision .stepItemImageSlot {
+  margin-top: 0;
+}
+
+.stepItemImageSlot {
+  margin-top: clamp(12px, 2vw, 20px);
+  aspect-ratio: 1980 / 1080;
+  width: 100%;
+  border: 1.5px dashed rgba(28, 43, 34, 0.25);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Orbitron';
+  font-size: 12px;
+  color: rgba(28, 43, 34, 0.35);
+  overflow: hidden;
+}
+
+.stepItemImageSlot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  cursor: none;
+}
+
+/* full-width holder for a single section-level image (e.g. a flow
+   diagram), as opposed to .stepItemImageSlot's per-row thumbnail */
+.flowImageHolder {
+  margin-top: clamp(16px, 3vw, 28px);
+  margin-bottom: clamp(16px, 2.5vw, 24px);
+  width: 100%;
+  aspect-ratio: 1980 / 1080;
+  border: 1.5px dashed rgba(28, 43, 34, 0.25);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Orbitron';
+  font-size: 12px;
+  color: rgba(28, 43, 34, 0.35);
+  overflow: hidden;
+}
+
+.flowImageHolder img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  cursor: none;
+}
+
+/* a caption right after a .flowImageHolder takes over the "space to
+   whatever comes next" job, so the image's own margin-bottom collapses
+   down to a tight gap instead (:has() scopes this to only when a caption
+   actually follows, leaving plain, caption-less uses like Flows alone) */
+.flowImageHolder:has(+ .imageCaption) {
+  margin-bottom: 8px;
+}
+
+/* small centered caption for a .flowImageHolder image — sits close under
+   it (tight gap above, via the rule above) with more room before the
+   next content block (larger gap below, here) */
+.imageCaption {
+  margin-top: 0;
+  margin-bottom: clamp(16px, 3vw, 28px);
+  text-align: center;
+  font-family: 'Orbitron' !important;
+  font-size: 11px !important;
+  color: rgba(28, 43, 34, 0.45) !important;
+  text-indent: 0 !important;
+}
+
+/* image carousel (Inspiration / Research) — the same segmented tab-bar
+   mechanic as .reflectionCarousel below, but each slide holds an image
+   instead of a paragraph. The slides share a fixed-ratio grid cell
+   (same 1980:1080 box used elsewhere on the site) with object-fit:contain
+   rather than cover, since these are reference screenshots and shouldn't
+   be cropped; the site-bg fill letterboxes whichever ratio doesn't
+   exactly match. */
+.imageCarousel {
+  margin-top: clamp(16px, 3vw, 28px);
+}
+
+.imageCarouselSlides {
+  display: grid;
+  overflow: hidden;
+  aspect-ratio: 1980 / 1080;
+  background-color: #F5F5F5;
+  border-radius: 4px;
+}
+
+.imageCarouselSlide {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateX(24px);
+  transition: transform 0.4s ease, opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.imageCarouselSlide.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.imageCarouselSlide.exiting {
+  transform: translateX(-24px);
+}
+
+.imageCarouselSlide img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.imageCarouselTabs {
+  display: flex;
+  gap: 8px;
+  margin-top: clamp(12px, 2vw, 18px);
+}
+
+.imageCarouselTab {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  border: none;
+  border-radius: 2px;
+  background: rgba(28, 43, 34, 0.15);
+  padding: 0;
+  cursor: none;
+  overflow: hidden;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.imageCarouselTab:hover {
+  background: rgba(205, 62, 0, 0.5);
+  transform: scaleY(1.8);
+}
+
+.imageCarouselTab.active {
+  transform: scaleY(1.8);
+}
+
+/* autoplay progress sweep — width driven by JS (initImageCarousel),
+   0 -> 100% over that slide's on-screen duration; reaching 100%
+   advances to the next slide, so this fill *is* the active indicator
+   (the flat active background it replaces would otherwise hide it) */
+.imageCarouselTabFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: #cd3e00;
+}
+
+/* full-viewport click-to-enlarge overlay for case-study images — always
+   present in the DOM (built once by initImageLightbox), toggled via
+   .open; pointer-events:none while closed so it never blocks clicks on
+   the page underneath */
+.imageLightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5vw;
+  background: rgba(28, 43, 34, 0.85);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+.imageLightbox.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.imageLightboxImg {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  cursor: none;
+  transform: scale(0.92);
+  transition: transform 0.35s ease;
+}
+
+.imageLightbox.open .imageLightboxImg {
+  transform: scale(1);
+}
+
+/* the dashed border/label is only the empty-placeholder state — once a
+   real image is actually placed inside, it should just look like a photo */
+.stepItemImageSlot:has(img),
+.flowImageHolder:has(img) {
+  border: none;
 }
 
 .projectSubTitle {
@@ -1498,6 +2036,17 @@ td a {
     margin-left: 0 !important;
   }
 
+  .caseStudyLayout {
+    flex-direction: column;
+  }
+
+  .caseStudyNav {
+    position: static;
+    transform: none;
+    width: 100%;
+    margin-bottom: 8%;
+  }
+
   .mediaWrap.mediaLoaded .panel {
     height: auto !important;
     transform: none !important;
@@ -1508,6 +2057,7 @@ td a {
     padding: clamp(10px, 2vw, 20px) !important;
     background-color: #F5F5F5;
     overflow-x: hidden;
+    overflow-x: clip;
 }
 
   #menu {
@@ -1536,15 +2086,15 @@ td a {
   .description ul:nth-child(3) { margin-left: 40px; margin-right: 0px; text-align: right; }
 
  
-  nav a{
+  .nav a{
     display: none;
     width: 0;
   }
 
-   nav {
+  .nav nav {
     display: flex;
     flex-direction: row;
-  };
+  }
 
   .heroSection {
     margin-bottom: 200px;

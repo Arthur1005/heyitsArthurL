@@ -270,6 +270,94 @@ window.addEventListener('load', () => {
             customCursor.textContent = '';
         });
     });
+
+    // image lightbox — click a case-study image to enlarge it against a
+    // dimmed backdrop. Hovering an eligible image previews the action via
+    // the same cursor-pill technique as the marquee hovers above; once
+    // open, hovering the backdrop (not the enlarged image itself) previews
+    // the close action the same way. The overlay is built once and reused,
+    // toggled via .open rather than added/removed from the DOM.
+    const lightboxImages = Array.from(document.querySelectorAll(
+        '.flowImageHolder img, .stepItemImageSlot img, .resultMedia .panel'
+    )).filter(el => el.tagName === 'IMG');
+
+    if (lightboxImages.length) {
+        const lightbox = document.createElement('div');
+        lightbox.className = 'imageLightbox';
+        const lightboxImg = document.createElement('img');
+        lightboxImg.className = 'imageLightboxImg';
+        lightbox.appendChild(lightboxImg);
+        document.body.appendChild(lightbox);
+
+        let lightboxOpen = false;
+
+        const showCursor = (text) => {
+            if (isMobileViewport) return;
+            customCursor.classList.add('textHover');
+            customCursor.textContent = text;
+        };
+        const hideCursor = () => {
+            if (isMobileViewport) return;
+            customCursor.classList.remove('textHover');
+            customCursor.textContent = '';
+        };
+
+        // .noScroll alone (overflow:hidden) doesn't preserve scroll
+        // position — collapsing body's scroll context snaps the page back
+        // to the top. Pinning body in place with a matching negative
+        // offset first, then restoring both on close, is the standard fix.
+        function lockScroll() {
+            const y = window.scrollY;
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${y}px`;
+            document.body.style.width = '100%';
+            document.body.classList.add('noScroll');
+        }
+
+        function unlockScroll() {
+            const y = -parseInt(document.body.style.top || '0', 10);
+            document.body.classList.remove('noScroll');
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            window.scrollTo(0, y);
+        }
+
+        function openLightbox(img) {
+            lightboxImg.src = img.currentSrc || img.src;
+            lightboxImg.alt = img.alt;
+            lightbox.classList.add('open');
+            lightboxOpen = true;
+            lockScroll();
+            hideCursor();
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('open');
+            lightboxOpen = false;
+            unlockScroll();
+            hideCursor();
+        }
+
+        lightboxImages.forEach(img => {
+            img.addEventListener('click', () => openLightbox(img));
+            img.addEventListener('mouseenter', () => showCursor('Full Screen'));
+            img.addEventListener('mouseleave', hideCursor);
+        });
+
+        // clicking anywhere in the lightbox closes it — the image itself
+        // included, not just the backdrop around it
+        lightbox.addEventListener('click', closeLightbox);
+
+        lightbox.addEventListener('mouseenter', () => {
+            if (lightboxOpen) showCursor('Exit');
+        });
+        lightbox.addEventListener('mouseleave', hideCursor);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && lightboxOpen) closeLightbox();
+        });
+    }
 });
 
 
@@ -552,6 +640,358 @@ function initSwipeableTabs() {
     }, { passive: true });
 }
 initSwipeableTabs();
+
+
+// generic "last intersecting wins" scroll-spy: watches a list of
+// {target, activate, deactivate} entries and keeps exactly one active —
+// whichever target is currently intersecting the rootMargin band and comes
+// latest in document order. `activateFirstByDefault` (default true) marks
+// the first entry active before anything has scrolled into view yet —
+// suitable for a page's top section, but not for a group that may start
+// below the fold (it would show as "active" before it's ever been seen).
+function createScrollSpy(entries, rootMargin, activateFirstByDefault = true) {
+    if (!entries.length) return;
+
+    const intersecting = new Set();
+    let activeIndex = -1;
+
+    function setActive(index) {
+        if (index === activeIndex) return;
+        if (activeIndex !== -1) entries[activeIndex].deactivate();
+        activeIndex = index;
+        if (activeIndex !== -1) entries[activeIndex].activate();
+    }
+
+    const observer = new IntersectionObserver((observed) => {
+        observed.forEach(obs => {
+            if (obs.isIntersecting) intersecting.add(obs.target);
+            else intersecting.delete(obs.target);
+        });
+
+        for (let i = entries.length - 1; i >= 0; i--) {
+            if (intersecting.has(entries[i].target)) {
+                setActive(i);
+                return;
+            }
+        }
+    }, { rootMargin, threshold: 0 });
+
+    entries.forEach(({ target }) => observer.observe(target));
+    if (activateFirstByDefault) setActive(0);
+}
+
+// case-study sidebar nav (Circula) — highlights the current section as you
+// scroll and reveals its sub-items, no-ops on every other page since
+// #caseStudyNav only exists here
+function initCaseStudyNav() {
+    const nav = document.getElementById('caseStudyNav');
+    if (!nav) return;
+
+    // `top: 50vh` alone would stick the nav's TOP edge to viewport-middle,
+    // not its center. CSS can't reference the element's own height to
+    // correct for that, so measure it and bake the correction into `top`
+    // itself — the browser's native sticky scrolling then eases from the
+    // natural (Brief-aligned) position into the centered one as a single
+    // continuous motion, with no JS-driven snap partway through. Re-run
+    // after a top-level item's sub-nav finishes expanding/collapsing
+    // (that's the only thing that changes the nav's own height), so it
+    // stays centered even while a sub-nav is open.
+    const centerStickyNav = isMobileViewport ? () => {} : () => {
+        nav.style.top = `calc(50vh - ${nav.offsetHeight / 2}px)`;
+    };
+    // recenters instantly, bypassing the 0.3s transition below — used
+    // whenever nav's height just changed and something else (a scroll
+    // alignment) is about to measure its new position immediately, so
+    // there's no stale value to animate away from
+    const snapCenterNav = () => {
+        if (isMobileViewport) return;
+        nav.style.transition = 'none';
+        centerStickyNav();
+        nav.offsetHeight;
+        nav.style.transition = 'top 0.3s ease';
+    };
+    if (!isMobileViewport) {
+        // the page's first paint (before this script runs) already commits
+        // the CSS fallback top:50vh as the "previous" value — merely
+        // ordering the top change before enabling the transition isn't
+        // enough to stop the browser animating from that committed value,
+        // so explicitly disable the transition, force a reflow to commit
+        // the correction under transition:none, then turn it on for any
+        // later recenters (sub-nav expand/collapse, resize)
+        snapCenterNav();
+        window.addEventListener('resize', centerStickyNav);
+    } else {
+        centerStickyNav();
+    }
+
+    const navItems = Array.from(nav.querySelectorAll('.caseStudyNavItem'));
+    const topEntries = navItems
+        .map(item => {
+            const link = item.querySelector(':scope > a');
+            const target = link ? document.getElementById(link.getAttribute('href').slice(1)) : null;
+            if (!target) return null;
+            return {
+                target,
+                activate: () => {
+                    item.classList.add('active');
+                    if (item.classList.contains('hasSub')) setTimeout(centerStickyNav, 360);
+                },
+                deactivate: () => {
+                    item.classList.remove('active');
+                    if (item.classList.contains('hasSub')) setTimeout(centerStickyNav, 360);
+                },
+            };
+        })
+        .filter(Boolean);
+
+    createScrollSpy(topEntries, '0px 0px -70% 0px');
+
+    // sub-item spy — highlights the matching design-task subtitle (h3) and
+    // its sidebar sub-link once the title itself reaches viewport-middle,
+    // same trigger point as the .stepBar orange highlight below, so both
+    // turn black/orange in sync as the reader scrolls past. Unlike
+    // topEntries, the first sub-item isn't at the top of the page, so it
+    // must not be activated by default — otherwise it shows black/active
+    // immediately on load, long before the reader has scrolled anywhere
+    // near it.
+    const subEntries = Array.from(nav.querySelectorAll('.caseStudySubNav a'))
+        .map(link => {
+            const target = document.getElementById(link.getAttribute('href').slice(1));
+            if (!target) return null;
+            const subtitle = target.querySelector('h3');
+            return {
+                target,
+                activate: () => {
+                    if (subtitle) subtitle.classList.add('active');
+                    link.classList.add('active');
+                },
+                deactivate: () => {
+                    if (subtitle) subtitle.classList.remove('active');
+                    link.classList.remove('active');
+                },
+            };
+        })
+        .filter(Boolean);
+
+    createScrollSpy(subEntries, '-45% 0px -45% 0px', false);
+
+    // clicking a nav link aligns the target's title to the nav's own top
+    // edge (not the viewport's) — on desktop the nav is vertically centered
+    // via sticky, so jumping to viewport-top would leave the title far from
+    // where the reader's eye already is on the nav. Mobile's nav isn't
+    // sticky, so it just scrolls to viewport-top as before.
+    nav.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = document.getElementById(a.getAttribute('href').slice(1));
+            if (!target) return;
+
+            const alignTo = (behavior) => {
+                if (isMobileViewport) {
+                    target.scrollIntoView({ behavior, block: 'start' });
+                } else {
+                    const delta = target.getBoundingClientRect().top - nav.getBoundingClientRect().top;
+                    window.scrollBy({ top: delta, behavior });
+                }
+            };
+
+            const titleEl = target.querySelector(':scope > .projectSubTitle, :scope > h3');
+            const flash = () => {
+                if (!titleEl) return;
+                titleEl.classList.add('caseStudyArrived');
+                titleEl.addEventListener('animationend', () => {
+                    titleEl.classList.remove('caseStudyArrived');
+                }, { once: true });
+            };
+
+            alignTo('smooth');
+
+            // landing on (or passing through) a section under a collapsed
+            // sidebar group makes the scroll-spy expand/collapse sidebar
+            // sub-navs shortly after this scroll lands, resizing the
+            // sticky nav and re-centering it — shifting target out from
+            // under the alignment above. Worse, correcting that can itself
+            // cross the threshold that decides which section counts as
+            // "active" (since it moves target closer to/past the nav),
+            // triggering a second resize. So this doesn't correct once —
+            // it converges: snap nav to its current correct position,
+            // measure the gap, nudge it closed, and repeat a few times a
+            // beat apart (letting each resize's own transition catch up)
+            // until the gap stops moving, then flash.
+            let settled = false;
+            let attempts = 0;
+            const settle = () => {
+                if (settled) return;
+                snapCenterNav();
+                if (isMobileViewport) {
+                    settled = true;
+                    flash();
+                    return;
+                }
+                const delta = target.getBoundingClientRect().top - nav.getBoundingClientRect().top;
+                attempts++;
+                if (Math.abs(delta) > 1) window.scrollBy({ top: delta, behavior: 'auto' });
+                if (Math.abs(delta) > 1 && attempts < 8) {
+                    setTimeout(settle, 180);
+                } else {
+                    settled = true;
+                    flash();
+                }
+            };
+            window.addEventListener('scrollend', () => setTimeout(settle, 200), { once: true });
+            setTimeout(settle, 1800);
+        });
+    });
+}
+initCaseStudyNav();
+
+
+// step lists (e.g. Problem / Flows / User assumptions) — each row's bar
+// lights up orange as it scrolls through, same mechanism as the sidebar's
+// active dot, just re-used at a smaller, denser scale. A narrower band
+// centred on the viewport (rather than the sections' top-third band) suits
+// short, closely-packed rows better. All step items on the page (across
+// every .stepList) share ONE spy rather than one per list, so there's a
+// single shared active-index and only one bar can ever be lit at a time —
+// document order makes that active row progress downward one list, then
+// the next, as the reader scrolls past each one in turn.
+function initStepLists() {
+    const entries = Array.from(document.querySelectorAll('.stepList .stepItem'))
+        // Impact's ticks use their own cumulative tracker below instead —
+        // they'd otherwise compete for this spy's single active slot
+        .filter(item => !item.closest('#cs-impact'))
+        .map(item => ({
+            target: item,
+            activate: () => item.classList.add('active'),
+            deactivate: () => item.classList.remove('active'),
+        }));
+    createScrollSpy(entries, '-45% 0px -45% 0px', false);
+}
+initStepLists();
+
+// Impact checklist — unlike the spy above (only one bar lit at a time),
+// any number of ticks can be green at once, one per item that's been
+// scrolled past the centre line. Each is still fully reversible, same as
+// the orange bars — it's only the "just one at a time" part that's
+// different. rootMargin shrinks the observed root to the viewport's top
+// half, so the observer only fires right as an item crosses that 50%
+// line; checking the item's own boundingClientRect at that moment (rather
+// than trusting isIntersecting alone) tells us which side it landed on
+// even once it's scrolled fully off-screen above, where isIntersecting
+// alone would go back to false and wrongly read as "not reached yet".
+function initImpactChecklist() {
+    const items = document.querySelectorAll('#cs-impact .stepItem');
+    if (!items.length) return;
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const passedCentre = entry.boundingClientRect.top < window.innerHeight * 0.5;
+            entry.target.classList.toggle('completed', passedCentre);
+        });
+    }, { rootMargin: '0px 0px -50% 0px', threshold: 0 });
+    items.forEach(item => observer.observe(item));
+}
+initImpactChecklist();
+
+// reflection carousel (Learning & Reflect) — a segmented progress bar
+// where each tab is one paragraph; clicking a tab crossfades/slides to
+// it. Only one non-active resting position exists in CSS (off to the
+// right, ready to enter), so the outgoing slide gets a temporary
+// .exiting class to send it off to the left instead — removed once its
+// own transition finishes, so it's back in the shared default resting
+// state next time it needs to enter from the right again.
+function initReflectionCarousel() {
+    document.querySelectorAll('.reflectionCarousel').forEach(carousel => {
+        const tabs = Array.from(carousel.querySelectorAll('.reflectionTab'));
+        const slides = Array.from(carousel.querySelectorAll('.reflectionSlide'));
+        if (!tabs.length || tabs.length !== slides.length) return;
+
+        let activeIndex = Math.max(slides.findIndex(s => s.classList.contains('active')), 0);
+
+        function goTo(index) {
+            if (index === activeIndex || index < 0 || index >= slides.length) return;
+            const oldSlide = slides[activeIndex];
+            const newSlide = slides[index];
+
+            oldSlide.classList.remove('active');
+            oldSlide.classList.add('exiting');
+            oldSlide.addEventListener('transitionend', () => {
+                oldSlide.classList.remove('exiting');
+            }, { once: true });
+
+            newSlide.classList.add('active');
+            tabs[activeIndex].classList.remove('active');
+            tabs[index].classList.add('active');
+            activeIndex = index;
+        }
+
+        tabs.forEach((tab, i) => tab.addEventListener('click', () => goTo(i)));
+    });
+}
+initReflectionCarousel();
+
+// image carousel (Inspiration / Research) — same segmented-tab-bar
+// mechanic as the reflection carousel above, but each slide holds an
+// image instead of a paragraph, and each tab autoplays: an inner
+// .imageCarouselTabFill sweeps 0 -> 100% over SLIDE_DURATION, then
+// advances to the next slide (looping back to the first after the last).
+function initImageCarousel() {
+    const SLIDE_DURATION = 4000;
+
+    document.querySelectorAll('.imageCarousel').forEach(carousel => {
+        const tabs = Array.from(carousel.querySelectorAll('.imageCarouselTab'));
+        const slides = Array.from(carousel.querySelectorAll('.imageCarouselSlide'));
+        const fills = tabs.map(tab => tab.querySelector('.imageCarouselTabFill'));
+        if (!tabs.length || tabs.length !== slides.length) return;
+
+        let activeIndex = Math.max(slides.findIndex(s => s.classList.contains('active')), 0);
+        let timer = null;
+
+        function resetFill(fill) {
+            if (!fill) return;
+            fill.style.transition = 'none';
+            fill.style.width = '0%';
+            void fill.offsetWidth; // force reflow so the next transition restarts from 0
+        }
+
+        function startFill(index) {
+            clearTimeout(timer);
+            const fill = fills[index];
+            resetFill(fill);
+            if (fill) {
+                requestAnimationFrame(() => {
+                    fill.style.transition = `width ${SLIDE_DURATION}ms linear`;
+                    fill.style.width = '100%';
+                });
+            }
+            timer = setTimeout(() => goTo((activeIndex + 1) % slides.length), SLIDE_DURATION);
+        }
+
+        function goTo(index) {
+            if (index === activeIndex || index < 0 || index >= slides.length) return;
+            const oldSlide = slides[activeIndex];
+            const newSlide = slides[index];
+
+            oldSlide.classList.remove('active');
+            oldSlide.classList.add('exiting');
+            oldSlide.addEventListener('transitionend', () => {
+                oldSlide.classList.remove('exiting');
+            }, { once: true });
+
+            newSlide.classList.add('active');
+            tabs[activeIndex].classList.remove('active');
+            tabs[index].classList.add('active');
+            resetFill(fills[activeIndex]);
+
+            activeIndex = index;
+            startFill(activeIndex);
+        }
+
+        tabs.forEach((tab, i) => tab.addEventListener('click', () => goTo(i)));
+
+        startFill(activeIndex);
+    });
+}
+initImageCarousel();
 
 
 // dropdown toggle (e.g. "Image & Text" under graphics)

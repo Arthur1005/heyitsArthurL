@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filter – Circula – Arthur Lin</title>
+        <link
+        rel="icon"
+        type="image/svg+xml"
+        href="./assets/img/favicon_black.svg"
+        media="(prefers-color-scheme: light)" />
+    <link
+        rel="icon"
+        type="image/png"
+        href="./assets/img/favicon_black.png"
+        media="(prefers-color-scheme: light)" />
+    <link
+        rel="icon"
+        type="image/svg+xml"
+        href="./assets/img/favicon_white.svg"
+        media="(prefers-color-scheme: dark)" />
+    <link
+        rel="icon"
+        type="image/png"
+        href="./assets/img/favicon_white.png"
+        media="(prefers-color-scheme: dark)" />
+    <link rel="stylesheet" href="style.css">
+    <script>
+    (function () {
+        var p = sessionStorage.getItem('pageTransitionPoint');
+        if (!p) return;
+        var parts = p.split(',');
+        var x = parseFloat(parts[0]);
+        var y = parseFloat(parts[1]);
+        var dx = Math.max(x, window.innerWidth - x);
+        var dy = Math.max(y, window.innerHeight - y);
+        var r = Math.sqrt(dx * dx + dy * dy);
+        var c = document.createElement('div');
+        c.id = 'pageTransitionCircle';
+        c.style.position = 'fixed';
+        c.style.left = x + 'px';
+        c.style.top = y + 'px';
+        c.style.width = '0px';
+        c.style.height = '0px';
+        c.style.borderRadius = '50%';
+        c.style.transform = 'translate(-50%, -50%)';
+        c.style.background = 'transparent';
+        c.style.boxShadow = '0 0 0 ' + r + 'px #cd3e00';
+        c.style.zIndex = '99999';
+        c.style.pointerEvents = 'none';
+        document.documentElement.appendChild(c);
+    })();
+    </script>
+</head>
+<body>
+    <header class="nav">
+        <div class="logoSection">
+            <a href="./index.html"><img src="./assets/img/logo.png" width="24px" alt="Logo"></a>
+        </div>
+        <p class="mobilePageHeader">projects</p>
+        <nav>
+            <a href="./about.html">about</a>
+            <a href="./projects.html" style="text-decoration: underline; text-underline-offset: 6px;">projects</a>
+            <a href="./reachout.html">reach out</a>
+        </nav>
+        <img id="menu" src="./assets/img/menu.svg">
+
+    </header>
+
+    <section class="selectedProjectSection" id="projectsSection">
+        <div class="aboutPageHomeSubTitle">
+            <h1>Filter</h1>
+            <h1>///</h1>
+        </div>
+
+        <div class="caseStudyLayout">
+        <nav class="caseStudyNav" id="caseStudyNav">
+            <ul>
+                <li class="caseStudyNavItem"><span class="caseStudyDot"></span><a href="circula.html#cs-brief">Brief / Introduction</a></li>
+                <li class="caseStudyNavItem"><span class="caseStudyDot"></span><a href="circula.html#cs-outcome">Outcome</a></li>
+                <li class="caseStudyNavItem"><span class="caseStudyDot"></span><a href="circula.html#cs-problem">Problem</a></li>
+                <li class="caseStudyNavItem"><span class="caseStudyDot"></span><a href="circula.html#cs-goal">Goal</a></li>
+                <li class="caseStudyNavItem hasSub">
+                    <span class="caseStudyDot"></span><a href="circula.html#cs-design-process">Design Process</a>
+                    <ul class="caseStudySubNav">
+                        <li><a href="circula.html#cs-dp-inspiration">Inspiration / Research</a></li>
+                        <li><a href="circula.html#cs-dp-assumptions">User assumptions</a></li>
+                        <li><a href="circula.html#cs-dp-flows">Flows</a></li>
+                        <li><a href="circula.html#cs-dp-ideation">Ideation</a></li>
+                        <li><a href="circula.html#cs-dp-wireframes">Wireframes</a></li>
+                    </ul>
+                </li>
+                <li class="caseStudyNavItem hasSub">
+                    <span class="caseStudyDot"></span><a href="circula.html#cs-design-decision">Design Decision</a>
+                    <ul class="caseStudySubNav">
+                        <li><a href="circula.html#cs-dd-key-ux">Key UX decisions</a></li>
+                        <li><a href="circula.html#cs-dd-interaction">Interaction details</a></li>
+                    </ul>
+                </li>
+                <li class="caseStudyNavItem"><span class="caseStudyDot"></span><a href="circula.html#cs-feedback">Feedback</a></li>
+                <li class="caseStudyNavItem"><span class="caseStudyDot"></span><a href="circula.html#cs-impact">Impact</a></li>
+                <li class="caseStudyNavItem"><span class="caseStudyDot"></span><a href="circula.html#cs-learning">Learning & Reflect</a></li>
+            </ul>
+        </nav>
+
+        <div class="caseStudyContent">
+
+        <div class="projectRoleTime">
+            <h1>UI/UX designer</h1>
+            <h1>Aug 2025 - June 2026</h1>
+        </div>
+
+
+        <div id="projectResult" role="tabpanel" aria-labelledby="projectResult">
+            <div class="resultMedia" style="margin-bottom: 10%;">
+                <!-- TODO: add result media (images/video) for Filter -->
+            </div>
+        </div>
+
+
+        <div id="projectConcept" role="tabpanel" aria-labelledby="projectConcept">
+            <div class="style1">
+                <div class="projectSubTitle">
+                    <h1>Project Overview</h1>
+                    <h1>///</h1>
+                </div>
+                <div>
+                    <p><!-- TODO: add a project overview for the Filter feature --></p>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        </div>
+        </div>
+
+        <a href="https://getcircula.app/discover-events" target="_blank"><section class="reachOutSection">
+        <div class="marquee circula">
+            <span>/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;</span>
+        </div>
+        <div class="marquee circula marqueeReverse">
+            <span>CIRCULA&nbsp;&nbsp;&nbsp;CIRCULA&nbsp;&nbsp;&nbsp;CIRCULA&nbsp;&nbsp;&nbsp;CIRCULA&nbsp;&nbsp;&nbsp;CIRCULA&nbsp;&nbsp;&nbsp;CIRCULA&nbsp;&nbsp;&nbsp;CIRCULA&nbsp;&nbsp;&nbsp;CIRCULA&nbsp;&nbsp;&nbsp;CIRCULA&nbsp;&nbsp;&nbsp;CIRCULA&nbsp;&nbsp;&nbsp;CIRCULA&nbsp;&nbsp;&nbsp;CIRCULA&nbsp;&nbsp;&nbsp;</span>
+        </div>
+        <div class="marquee circula">
+            <span>/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;/ LIVE SITE / LIVE SITE / LIVE SITE&nbsp;&nbsp;&nbsp;</span>
+        </div>
+        </section></a>
+
+    <section class="reachOutSection">
+
+
+    <div style="padding: clamp(10px, 2vw, 20px) !important; display: flex; flex-direction: row; align-items: flex-end; width: 100%; justify-content: center;">
+
+        <button class="backTop" style="margin-top: 0; flex-shrink: 0;">
+            <svg viewBox="0 0 200 80" preserveAspectRatio="none">
+                <path d="M10 70 L10 30 L100 18 L190 30 L190 70 Z" />
+            </svg>
+            <span>Back to top</span>
+        </button>
+
+        </div>
+
+
+
+
+    <span class="icon"></span>
+
+    </section>
+
+
+    </section>
+
+    </section>
+
+    <footer>
+        <div class="footer1">
+            <div class="footer11">
+                <a href="./about.html">about</a>
+                <a href="./projects.html">project</a>
+                <a href="./reachout.html">reach out</a>
+            </div>
+            <div class="footer12">
+                <a href="https://www.linkedin.com/in/arthur-lin-4a5722307/" target="_blank">Linkedin</a>
+                <a href="https://www.instagram.com/_arthur.l_/" target="_blank">Instagram</a>
+            </div>
+        </div>
+        <div class="footer2">
+            <svg viewBox="0 0 184 7" xmlns="http://www.w3.org/2000/svg" class="footerLogo">
+                <path d="M29.5132 0.430551V6.95032H28.6521V3.90571H0.871353V6.95032H0V0.430551C0 0.143517 0.143517 0 0.430551 0H29.0827C29.3697 0 29.5132 0.143517 29.5132 0.430551ZM0.871353 3.03436H28.6521V0.871352H0.871353V3.03436Z"/>
+                <path d="M59.7242 2.19376V1.73245C59.7242 1.13788 59.1091 0.871352 57.2741 0.871352H32.0254V2.9831H56.9666C59.0681 2.9831 59.7242 2.68582 59.7242 2.19376ZM32.0254 3.85445V6.95032H31.1541V0.430551C31.1541 0.143517 31.2976 0 31.5846 0H57.2741C59.7754 0 60.5955 0.635575 60.5955 1.73245V2.19376C60.5955 2.82933 60.0625 3.25988 59.2219 3.41365C60.0625 3.57767 60.5955 4.00822 60.5955 4.63355V6.95032H59.7242V4.63355C59.7242 4.15174 59.0681 3.85445 56.9666 3.85445H32.0254Z"/>
+                <path d="M91.171 0V0.871352H76.7988V6.95032H75.9275V0.871352H61.4528V0H91.171Z"/>
+                <path d="M121.94 0V6.95032H121.078V3.8032H93.0722V6.95032H92.2008V0H93.0722V2.93185H121.078V0H121.94Z"/>
+                <path d="M127.317 6.07897H148.773C151.151 6.07897 151.745 5.61766 151.745 4.61304V0H152.617V4.61304C152.617 6.31474 151.397 6.95032 148.773 6.95032H127.317C124.692 6.95032 123.473 6.31474 123.473 4.61304V0H124.344V4.61304C124.344 5.61766 124.939 6.07897 127.317 6.07897Z"/>
+                <path d="M182.729 2.19376V1.73245C182.729 1.13788 182.114 0.871352 180.279 0.871352H155.03V2.9831H179.971C182.073 2.9831 182.729 2.68582 182.729 2.19376ZM155.03 3.85445V6.95032H154.159V0.430551C154.159 0.143517 154.302 0 154.589 0H180.279C182.78 0 183.6 0.635575 183.6 1.73245V2.19376C183.6 2.82933 183.067 3.25988 182.226 3.41365C183.067 3.57767 183.6 4.00822 183.6 4.63355V6.95032H182.729V4.63355C182.729 4.15174 182.073 3.85445 179.971 3.85445H155.03Z"/>
+            </svg>
+        </div>
+        <div class="footer3">
+            <a href="">privacy policy</a>
+            <a href="">terms of service</a>
+            <p><span class="copyrightMark">C</span> 2026 Arthur Lin</p>
+        </div>
+    </footer>
+    <div class="sideNav" id="sideNav">
+        <img id="sideNavCloseBtn" class="sideNavClose" src="./assets/img/menuClose.svg">
+        <a href="./about.html">about</a>
+        <a href="./projects.html">projects</a>
+        <a href="./reachout.html">reach out</a>
+    </div>
+    <script src="style.js"></script>
+</body>
+</html>

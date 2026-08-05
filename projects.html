@@ -80,12 +80,39 @@
         </div>
         
         <div id="uiux" class="tab" role="tabpanel" aria-labelledby="uiux">
-            <a href="./circula.html">
-                <div class="selectedProjectHeader">
-                    <h1>Circula</h1>
+            <div class="selectedProjectHeader dropdownToggle" onclick="toggleDropdown(this)" role="button" tabindex="0" aria-expanded="false">
+                <h1>Circula</h1>
+                <div class="headerRight">
                     <p class="role">UI/UX</p>
+                    <span class="dropdownArrow"></span>
                 </div>
-            </a>
+            </div>
+            <div class="dropdownPanel">
+                <a href="./circula.html" class="subProjectLink">
+                    <div class="selectedProjectHeader">
+                        <h1>Overview</h1>
+                        <p class="role">UI/UX designer</p>
+                    </div>
+                </a>
+                <a href="./circulaProfileEdit.html" class="subProjectLink">
+                    <div class="selectedProjectHeader">
+                        <h1>Profile Edit</h1>
+                        <p class="role">UI/UX designer</p>
+                    </div>
+                </a>
+                <a href="./circulaFollowUnfollow.html" class="subProjectLink">
+                    <div class="selectedProjectHeader">
+                        <h1>Follow / Unfollow Users</h1>
+                        <p class="role">UI/UX designer</p>
+                    </div>
+                </a>
+                <a href="./circulaVerify.html" class="subProjectLink">
+                    <div class="selectedProjectHeader">
+                        <h1>OTP Verification</h1>
+                        <p class="role">UI/UX designer</p>
+                    </div>
+                </a>
+            </div>
 
             <a href="./pacman.html">
                 <div class="selectedProjectHeader">
