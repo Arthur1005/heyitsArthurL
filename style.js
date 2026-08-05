@@ -951,6 +951,7 @@ function initReflectionCarousel() {
     document.querySelectorAll('.reflectionCarousel').forEach(carousel => {
         const tabs = Array.from(carousel.querySelectorAll('.reflectionTab'));
         const slides = Array.from(carousel.querySelectorAll('.reflectionSlide'));
+        const slidesContainer = carousel.querySelector('.reflectionSlides');
         if (!tabs.length || tabs.length !== slides.length) return;
 
         let activeIndex = Math.max(slides.findIndex(s => s.classList.contains('active')), 0);
@@ -973,6 +974,44 @@ function initReflectionCarousel() {
         }
 
         tabs.forEach((tab, i) => tab.addEventListener('click', () => goTo(i)));
+
+        // swipe left/right on touch devices to step between reflections —
+        // reuses the same goTo/active-class transition as tapping a tab,
+        // just triggered by a horizontal drag instead
+        if (slidesContainer) {
+            const SWIPE_THRESHOLD_PX = 40;
+            const DIRECTION_LOCK_PX = 10;
+            let startX = 0;
+            let startY = 0;
+            let horizontal = null;
+
+            slidesContainer.addEventListener('touchstart', (e) => {
+                if (e.touches.length !== 1) return;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                horizontal = null;
+            }, { passive: true });
+
+            slidesContainer.addEventListener('touchmove', (e) => {
+                if (e.touches.length !== 1) return;
+                if (horizontal === null) {
+                    const dx = e.touches[0].clientX - startX;
+                    const dy = e.touches[0].clientY - startY;
+                    if (Math.abs(dx) < DIRECTION_LOCK_PX && Math.abs(dy) < DIRECTION_LOCK_PX) return;
+                    horizontal = Math.abs(dx) > Math.abs(dy);
+                }
+                // only swallow the scroll gesture once it's confirmed
+                // horizontal, so a vertical page scroll starting here is
+                // never blocked
+                if (horizontal) e.preventDefault();
+            }, { passive: false });
+
+            slidesContainer.addEventListener('touchend', (e) => {
+                if (horizontal !== true) return;
+                const dx = e.changedTouches[0].clientX - startX;
+                if (Math.abs(dx) > SWIPE_THRESHOLD_PX) goTo(activeIndex + (dx < 0 ? 1 : -1));
+            }, { passive: true });
+        }
     });
 }
 initReflectionCarousel();
