@@ -455,8 +455,6 @@ initMediaLoading();
 // once the finger lifts. Reuses the existing openTab click handler to
 // finalise state so it stays identical to tapping a tab button.
 function initSwipeableTabs() {
-    if (isMobileViewport) return;
-
     const cate = document.querySelector('.projectsCate');
     const container = document.getElementById('projectsSection');
     if (!cate || !container) return;
@@ -844,6 +842,56 @@ function initCaseStudyNav() {
     });
 }
 initCaseStudyNav();
+
+// mobile-only reading progress bar (Circula case studies) — replaces the
+// desktop sidebar nav with a single fixed bar pinned to the top of the
+// viewport: its fill tracks scroll progress through .caseStudyContent
+// left-to-right, and its label shows whichever section is currently active,
+// reusing the same section titles already listed in #caseStudyNav
+function initCaseStudyProgressBar() {
+    if (!isMobileViewport) return;
+    const bar = document.getElementById('caseStudyProgress');
+    const fill = document.getElementById('caseStudyProgressFill');
+    const titleEl = document.getElementById('caseStudyProgressTitle');
+    const content = document.querySelector('.caseStudyContent');
+    if (!bar || !fill || !titleEl || !content) return;
+
+    const sections = Array.from(content.querySelectorAll(':scope > .caseStudySection'))
+        .map(section => {
+            const link = document.querySelector(`.caseStudyNav a[href="#${section.id}"]`);
+            return { section, title: link ? link.textContent.trim() : '' };
+        })
+        .filter(s => s.title);
+    if (!sections.length) return;
+
+    let ticking = false;
+    const update = () => {
+        ticking = false;
+        const contentTop = content.getBoundingClientRect().top + window.scrollY;
+        const readable = content.scrollHeight - window.innerHeight;
+        const pct = readable > 0 ? Math.min(1, Math.max(0, (window.scrollY - contentTop) / readable)) : 0;
+        fill.style.width = `${pct * 100}%`;
+
+        // stays hidden until the reader scrolls past the top of the first
+        // section (i.e. into the case study itself, past the hero/title),
+        // so it isn't fixed on screen for the plain intro area above it
+        bar.classList.toggle('visible', content.getBoundingClientRect().top <= 0);
+
+        let active = sections[0];
+        sections.forEach(s => {
+            if (s.section.getBoundingClientRect().top - window.innerHeight * 0.3 <= 0) active = s;
+        });
+        titleEl.textContent = active.title;
+    };
+
+    window.addEventListener('scroll', () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(update);
+    }, { passive: true });
+    update();
+}
+initCaseStudyProgressBar();
 
 
 // step lists (e.g. Problem / Flows / User assumptions) — each row's bar
