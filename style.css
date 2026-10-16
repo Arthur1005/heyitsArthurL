@@ -2536,3 +2536,34 @@ hr {
   pointer-events: none;
   z-index: 99999;
 }
+
+/* project list: "Context · Category" label above each project title */
+.projectTitleBlock {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 0.8vw, 10px);
+    min-width: 0;
+}
+
+.projectMeta {
+    font-family: 'Orbitron';
+    font-size: clamp(11px, 1.1vw, 14px);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.6;
+    text-indent: 0 !important;
+    text-align: left;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .selectedProjectHeader:has(.projectTitleBlock) {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .selectedProjectHeader:has(.projectTitleBlock) .role {
+        text-align: left;
+        text-indent: 0 !important;
+        margin: 0;
+    }
+}
