@@ -2602,3 +2602,19 @@ hr {
 .projectLogo--circula {
     /* background-image: url("./assets/img/circulaLogo.svg"); border: none; */
 }
+
+/* label line + logo above a case study page title */
+.pageProjectMeta {
+    margin-top: 40%;
+    margin-bottom: clamp(10px, 1.2vw, 16px) !important;
+    font-size: clamp(12px, 1.2vw, 15px);
+}
+.pageProjectMeta .projectLogo {
+    width: clamp(28px, 2.6vw, 36px);
+    height: clamp(28px, 2.6vw, 36px);
+    border-radius: 8px;
+}
+
+.pageProjectMeta + .aboutPageHomeSubTitle {
+    margin-top: 0;
+}
