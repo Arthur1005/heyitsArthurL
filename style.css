@@ -2578,3 +2578,27 @@ hr {
     text-align: center;
     padding: 0 16px;
 }
+
+/* small project logo shown before the label line in project lists.
+   Placeholder for now: to use the real Circula logo, add the file and set
+   e.g.  background-image: url("./assets/img/circulaLogo.svg");  and
+   border: none;  on .projectLogo--circula below. */
+.projectMeta:has(.projectLogo) {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.projectLogo {
+    display: inline-block;
+    flex-shrink: 0;
+    width: clamp(18px, 1.8vw, 24px);
+    height: clamp(18px, 1.8vw, 24px);
+    border-radius: 6px;
+    border: 1.5px dashed rgba(28, 43, 34, 0.45);
+    background: center / contain no-repeat;
+}
+
+.projectLogo--circula {
+    /* background-image: url("./assets/img/circulaLogo.svg"); border: none; */
+}
