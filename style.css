@@ -2567,3 +2567,14 @@ hr {
         margin: 0;
     }
 }
+
+/* label shown inside an empty image box until the real image is added */
+.imagePlaceholderLabel {
+    font-family: 'Orbitron';
+    font-size: clamp(11px, 1.1vw, 14px);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(28, 43, 34, 0.45);
+    text-align: center;
+    padding: 0 16px;
+}
