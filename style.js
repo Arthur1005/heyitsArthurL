@@ -907,7 +907,7 @@ function initStepLists() {
     const entries = Array.from(document.querySelectorAll('.stepList .stepItem'))
         // Impact's ticks use their own cumulative tracker below instead —
         // they'd otherwise compete for this spy's single active slot
-        .filter(item => !item.closest('#cs-impact'))
+        .filter(item => !item.closest('#cs-impact') && !item.closest('.numberedList'))
         .map(item => ({
             target: item,
             activate: () => item.classList.add('active'),
@@ -928,7 +928,8 @@ initStepLists();
 // even once it's scrolled fully off-screen above, where isIntersecting
 // alone would go back to false and wrongly read as "not reached yet".
 function initImpactChecklist() {
-    const items = document.querySelectorAll('#cs-impact .stepItem');
+    // numbered lists (1, 2, 3 circles) share the exact same behaviour
+    const items = document.querySelectorAll('#cs-impact .stepItem, .numberedList .stepItem');
     if (!items.length) return;
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {

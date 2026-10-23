@@ -1556,6 +1556,34 @@ h3 {
   fill: #34C759;
 }
 
+/* numbered variant of the Impact checklist: same grey circle that turns
+   green once scrolled past the centre line, with 1, 2, 3 in place of the tick */
+.numberIcon {
+  flex-shrink: 0;
+  align-self: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(28, 43, 34, 0.15);
+  color: #ffffff;
+  font-family: 'Orbitron';
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 22px;
+  text-align: center;
+  text-indent: 0 !important;
+  transition: background-color 0.3s ease;
+}
+
+.stepItem.completed .numberIcon {
+  background: #34C759;
+}
+
+/* rows with an image: keep the number beside the image's top edge */
+.stepItem:has(.stepItemImageSlot) .numberIcon {
+  align-self: flex-start;
+}
+
 /* reflection carousel — a segmented progress bar (tabs) where each
    segment is one paragraph; only the active paragraph is shown, the
    rest are cross-faded/slid out via CSS grid stacking (all slides share
