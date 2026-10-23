@@ -1065,40 +1065,254 @@ function initReflectionCarousel() {
 initReflectionCarousel();
 
 // slide mode (opt-in via <body class="slideMode">): the case study reads
-// like a deck — each block (the intro video and every section) rises and
-// fades in as it arrives, and fades back once it has scrolled past, so the
-// page feels like swapping slides rather than one long scroll. Fully
-// reversible in both directions. Classes are only added by JS, so with JS
-// off (or reduced motion on) everything simply shows as normal.
+// like a deck. Slides = the page header, the intro video and each major
+// section. Only the current slide is shown; the others are faded out.
+//
+// Desktop (mouse/trackpad): scrolling no longer free-scrolls the page.
+// Each wheel gesture / arrow key either moves within the current slide
+// (only when that slide is taller than the screen, e.g. Solution) or, once
+// at its edge, swaps to the next/previous slide with a fade. One gesture
+// never skips more than one slide: trackpad inertia from the gesture that
+// triggered a swap is ignored. The page layout itself is untouched, so the
+// sidebar spy, step lists, lightbox and the Reflection carousel (which
+// steps as the page moves through its own track) all keep working.
+//
+// Touch devices / reduced motion: no scroll hijacking — sections just
+// fade in as they arrive and fade back once passed.
 function initSlideMode() {
     if (!document.body.classList.contains('slideMode')) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const content = document.querySelector('.caseStudyContent');
     if (!content) return;
-    const items = Array.from(content.children)
-        .filter(el => el.matches('.caseStudySection, .resultMedia'));
-    if (!items.length) return;
-    items.forEach(el => el.classList.add('slideItem'));
 
-    let ticking = false;
-    const update = () => {
-        ticking = false;
-        const vh = window.innerHeight;
-        items.forEach(el => {
-            const r = el.getBoundingClientRect();
-            const arrived = r.top < vh * 0.82;
-            const past = r.bottom < vh * 0.28;
-            el.classList.toggle('slideIn', arrived && !past);
-            el.classList.toggle('slidePast', past);
+    const heroEls = ['.pageProjectMeta', '.aboutPageHomeSubTitle', '.projectRoleTime']
+        .map(sel => document.querySelector('#projectsSection > ' + sel)).filter(Boolean);
+    const blocks = Array.from(content.children).filter(el => el.matches('.caseStudySection, .resultMedia'));
+    // the closing block (live-site banner + back-to-top) after the case study
+    const layout = document.querySelector('#projectsSection > .caseStudyLayout');
+    const endEls = layout ? Array.from(layout.parentElement.children)
+        .filter(el => layout.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) : [];
+    const slides = [];
+    if (heroEls.length) slides.push(heroEls);
+    blocks.forEach(el => slides.push([el]));
+    if (endEls.length) slides.push(endEls);
+    if (slides.length < 2) return;
+    slides.flat().forEach(el => el.classList.add('slideItem'));
+
+    const paging = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const vh = () => window.innerHeight;
+    const absTop = el => el.getBoundingClientRect().top + window.scrollY;
+    const absBottom = el => el.getBoundingClientRect().bottom + window.scrollY;
+    const maxScroll = () => document.documentElement.scrollHeight - vh();
+
+    // ---- touch / reduced setups: arrival-based fade only
+    if (!paging) {
+        let ticking = false;
+        const update = () => {
+            ticking = false;
+            slides.forEach(els => els.forEach(el => {
+                const r = el.getBoundingClientRect();
+                const past = r.bottom < vh() * 0.28;
+                el.classList.toggle('slideIn', r.top < vh() * 0.82 && !past);
+                el.classList.toggle('slidePast', past);
+            }));
+        };
+        update();
+        window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+        window.addEventListener('resize', update);
+        window.addEventListener('load', update);
+        return;
+    }
+
+    document.body.classList.add('paging');
+
+    // ---- slide ranges in page-scroll coordinates: [start, stop]
+    // short slides are centred on screen; tall ones start just below the top
+    // and can be moved through until their bottom reaches the screen bottom.
+    let ranges = [];
+    // invisible room after the Reflection so its last reflection (and then the
+    // closing slide) can always be scrolled to, even on very tall screens
+    const reflectionSection = slides.map(els => els[0]).find(el => el.querySelector && el.querySelector('.reflectionScrollTrack'));
+    const spacer = document.createElement('div');
+    spacer.className = 'slideSpacer';
+    spacer.setAttribute('aria-hidden', 'true');
+    if (reflectionSection) reflectionSection.appendChild(spacer);
+    const measure = () => {
+        spacer.style.height = '0px';
+        measureRanges();
+        const ref = ranges.find(r => r.points);
+        if (ref) {
+            const need = ref.points[ref.points.length - 1] + 2 - maxScroll();
+            if (need > 0) { spacer.style.height = Math.ceil(need) + 'px'; measureRanges(); }
+        }
+    };
+    const measureRanges = () => {
+        const top = Math.round(vh() * 0.12), bottomPad = Math.round(vh() * 0.08);
+        ranges = slides.map((els, k) => {
+            const t = Math.min(...els.map(absTop)), btm = Math.max(...els.map(absBottom));
+            const h = btm - t;
+            let start = k === 0 ? 0 : (h <= vh() - top - bottomPad ? t - (vh() - h) / 2 : t - top);
+            start = Math.max(0, Math.min(start, maxScroll()));
+            let stop = k === slides.length - 1 ? maxScroll() : Math.max(start, btm + bottomPad - vh());
+            // a slide that only overflows by a sliver counts as fitting the screen
+            if (k !== slides.length - 1 && stop - start < vh() * 0.15) stop = start;
+            // a scroll-driven Reflection needs enough travel to reach its last
+            // reflection (same step size as initReflectionCarousel uses)
+            // a scroll-driven Reflection gets one stop per reflection, so each
+            // gesture moves exactly one reflection (same step size as
+            // initReflectionCarousel uses to pick the active one)
+            const track = els[0].querySelector && els[0].querySelector('.reflectionScrollTrack');
+            let points = null;
+            if (track) {
+                const sticky = track.querySelector('.reflectionSticky');
+                const n = track.querySelectorAll('.reflectionSlide').length;
+                const stickyTop = parseFloat(getComputedStyle(sticky).top) || 0;
+                const stepR = Math.max(vh() * 0.45, 260);
+                const p0 = absTop(track) - stickyTop + 4;
+                points = Array.from({ length: n }, (_, i) => Math.round(p0 + i * stepR + stepR * 0.5));
+                start = Math.min(start, points[0]);
+                stop = points[n - 1];
+            }
+            return { start: Math.round(start), stop: Math.round(Math.min(stop, maxScroll())), points };
         });
+        // a slide must end before the next one begins
+        for (let k = 0; k < ranges.length - 1; k++) {
+            if (ranges[k].points) {
+                ranges[k + 1].start = Math.max(ranges[k + 1].start, ranges[k].stop + 1);
+                ranges[k + 1].stop = Math.max(ranges[k + 1].stop, ranges[k + 1].start);
+            } else {
+                ranges[k].stop = Math.max(ranges[k].start, Math.min(ranges[k].stop, ranges[k + 1].start - 1));
+            }
+        }
     };
-    const onScroll = () => {
-        if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    const currentIndex = () => {
+        const y = window.scrollY + 2;
+        let k = 0;
+        ranges.forEach((r, i) => { if (y >= r.start) k = i; });
+        return k;
     };
-    update();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    window.addEventListener('load', update);
+
+    // ---- visibility: only the current slide is shown
+    let shown = -1;
+    const show = (k) => {
+        shown = k;
+        slides.forEach((els, i) => els.forEach(el => {
+            el.classList.toggle('slideIn', i === k);
+            el.classList.toggle('slidePast', i < k);
+        }));
+    };
+    const syncFromScroll = () => { if (!swapping) { const k = currentIndex(); if (k !== shown) show(k); } };
+
+    // ---- swapping with a fade
+    let swapping = false, lockedGesture = -1;
+    const SWAP_OUT_MS = 280, SWAP_IN_MS = 520;
+    const swapTo = (k, landAt) => {
+        if (swapping || k < 0 || k >= slides.length) return;
+        const from = shown, forward = k > from;
+        swapping = true;
+        lockedGesture = gesture;
+        slides[from].forEach(el => el.classList.add(forward ? 'leavingUp' : 'leavingDown'));
+        setTimeout(() => {
+            window.scrollTo({ top: landAt, behavior: 'instant' });
+            slides[from].forEach(el => el.classList.remove('leavingUp', 'leavingDown'));
+            show(k);
+            setTimeout(() => { swapping = false; }, SWAP_IN_MS);
+        }, SWAP_OUT_MS);
+    };
+
+    // ---- input: wheel / trackpad
+    let gesture = 0, lastWheel = 0, endHitGesture = -1, hopGesture = -1;
+    const step = (dy) => {
+        const k = shown, r = ranges[k], y = window.scrollY;
+        if (r.points) {
+            // Reflection: hop between its reflections (one hop per gesture),
+            // then on to the next slide
+            if (hopGesture === gesture) return;
+            let idx = -1;
+            r.points.forEach((p, i) => { if (y >= p - 3) idx = i; });
+            if (dy > 0) {
+                if (idx < r.points.length - 1) {
+                    window.scrollTo({ top: r.points[idx + 1], behavior: 'instant' });
+                    endHitGesture = hopGesture = gesture;
+                } else if (k < slides.length - 1 && endHitGesture !== gesture) {
+                    swapTo(k + 1, ranges[k + 1].points ? ranges[k + 1].points[0] : ranges[k + 1].start);
+                }
+            } else if (dy < 0) {
+                if (idx > 0) {
+                    window.scrollTo({ top: r.points[idx - 1], behavior: 'instant' });
+                    endHitGesture = hopGesture = gesture;
+                } else if (k > 0 && endHitGesture !== gesture) {
+                    swapTo(k - 1, ranges[k - 1].stop);
+                }
+            }
+            return;
+        }
+        if (dy > 0) {
+            if (y < r.stop - 1) {
+                const ny = Math.min(y + dy, r.stop);
+                window.scrollTo({ top: ny, behavior: 'instant' });
+                if (ny >= r.stop - 1) endHitGesture = gesture;
+            } else if (k < slides.length - 1 && endHitGesture !== gesture) {
+                swapTo(k + 1, ranges[k + 1].points ? ranges[k + 1].points[0] : ranges[k + 1].start);
+            }
+        } else if (dy < 0) {
+            if (y > r.start + 1) {
+                const ny = Math.max(y + dy, r.start);
+                window.scrollTo({ top: ny, behavior: 'instant' });
+                if (ny <= r.start + 1) endHitGesture = gesture;
+            } else if (k > 0 && endHitGesture !== gesture) {
+                swapTo(k - 1, ranges[k - 1].stop);
+            }
+        }
+    };
+    const blocked = () => document.body.classList.contains('noScroll') || document.body.classList.contains('navLocked');
+
+    window.addEventListener('wheel', (e) => {
+        if (blocked() || e.ctrlKey) return;               // let pinch-zoom / open overlays behave normally
+        e.preventDefault();
+        const now = performance.now();
+        if (now - lastWheel > 160) gesture++;             // a pause starts a new gesture
+        lastWheel = now;
+        if (swapping || gesture === lockedGesture) return; // ignore the inertia tail of a swap
+        let dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? vh() : 1);
+        if (Math.abs(dy) < 2) return;
+        step(dy);
+    }, { passive: false });
+
+    window.addEventListener('keydown', (e) => {
+        if (blocked() || e.target.closest('input, textarea, select, [contenteditable]')) return;
+        const down = ['ArrowDown', 'PageDown'].includes(e.key) || (e.key === ' ' && !e.shiftKey);
+        const up = ['ArrowUp', 'PageUp'].includes(e.key) || (e.key === ' ' && e.shiftKey);
+        if (!down && !up) return;
+        e.preventDefault();
+        gesture++;
+        if (swapping) return;
+        step((down ? 1 : -1) * vh() * 0.6);
+    });
+
+    // ---- sidebar nav: swap straight to the clicked section
+    document.querySelectorAll('#caseStudyNav a[href^="#"]').forEach(a => {
+        a.addEventListener('click', (e) => {
+            const target = document.getElementById(a.getAttribute('href').slice(1));
+            if (!target) return;
+            const k = slides.findIndex(els => els.some(el => el === target || el.contains(target)));
+            if (k < 0) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            measure();
+            const r = ranges[k];
+            const isSub = slides[k][0] !== target;
+            const land = isSub ? Math.min(r.stop, Math.max(r.start, absTop(target) - vh() * 0.12)) : r.start;
+            if (k === shown) window.scrollTo({ top: land, behavior: 'smooth' });
+            else swapTo(k, land);
+        }, true);
+    });
+
+    measure();
+    show(currentIndex());
+    window.addEventListener('scroll', syncFromScroll, { passive: true });
+    window.addEventListener('resize', () => { measure(); syncFromScroll(); });
+    window.addEventListener('load', () => { measure(); show(currentIndex()); });
 }
 initSlideMode();
 
