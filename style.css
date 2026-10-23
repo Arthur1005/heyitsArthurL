@@ -2618,3 +2618,17 @@ hr {
 .pageProjectMeta + .aboutPageHomeSubTitle {
     margin-top: 0;
 }
+
+/* Filter by Friends walkthrough video: rounded corners, no grey edge.
+   The grey "shadow" was the wrapper's #ececec background showing through the
+   gap under an inline <video>; making the video a block removes it. */
+.mediaWrap:has(.roundedVideo) {
+    border-radius: 40px;
+    background-color: transparent;
+    box-shadow: none;
+}
+.mediaWrap .roundedVideo {
+    display: block;
+    border-radius: 40px;
+    box-shadow: none;
+}
