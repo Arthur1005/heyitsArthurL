@@ -1579,11 +1579,6 @@ h3 {
   background: #34C759;
 }
 
-/* rows with an image: keep the number beside the image's top edge */
-.stepItem:has(.stepItemImageSlot) .numberIcon {
-  align-self: flex-start;
-}
-
 /* reflection carousel — a segmented progress bar (tabs) where each
    segment is one paragraph; only the active paragraph is shown, the
    rest are cross-faded/slid out via CSS grid stacking (all slides share
