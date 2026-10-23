@@ -2655,3 +2655,11 @@ hr {
     border-radius: 40px;
     box-shadow: none;
 }
+
+/* short bar variant: a one-line-tall bar (same size as a single text point's
+   bar) aligned to the top of the row's photo, instead of running the full
+   height of image + caption */
+.stepList.shortBars .stepBar {
+    align-self: flex-start;
+    height: clamp(24px, 2.6vw, 34px);
+}
