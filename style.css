@@ -2550,7 +2550,7 @@ hr {
     font-size: clamp(11px, 1.1vw, 14px);
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    opacity: 0.6;
+    color: rgba(28, 43, 34, 0.6);
     text-indent: 0 !important;
     text-align: left;
     margin: 0;
@@ -2579,10 +2579,8 @@ hr {
     padding: 0 16px;
 }
 
-/* small project logo shown before the label line in project lists.
-   Placeholder for now: to use the real Circula logo, add the file and set
-   e.g.  background-image: url("./assets/img/circulaLogo.svg");  and
-   border: none;  on .projectLogo--circula below. */
+/* small project logo shown before the label line in project lists
+   (the Circula logo is set on .projectLogo--circula below) */
 .projectMeta:has(.projectLogo) {
     display: flex;
     align-items: center;
@@ -2600,7 +2598,9 @@ hr {
 }
 
 .projectLogo--circula {
-    /* background-image: url("./assets/img/circulaLogo.svg"); border: none; */
+    background-image: url("./assets/img/circulaLogo.png");
+    border: none;
+    border-radius: 0;
 }
 
 /* label line + logo above a case study page title */
