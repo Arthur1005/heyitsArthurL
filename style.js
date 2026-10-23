@@ -957,24 +957,71 @@ function initReflectionCarousel() {
 
         let activeIndex = Math.max(slides.findIndex(s => s.classList.contains('active')), 0);
 
-        function goTo(index) {
+        // set below when this carousel is scroll-driven (inside a
+        // .reflectionScrollTrack): tabs/swipes then move the page to the
+        // matching scroll position so scrolling and the carousel stay in sync
+        let syncScroll = null;
+
+        function goTo(index, fromScroll = false) {
             if (index === activeIndex || index < 0 || index >= slides.length) return;
             const oldSlide = slides[activeIndex];
             const newSlide = slides[index];
+            const forward = index > activeIndex;
 
             oldSlide.classList.remove('active');
-            oldSlide.classList.add('exiting');
-            oldSlide.addEventListener('transitionend', () => {
-                oldSlide.classList.remove('exiting');
-            }, { once: true });
+            if (forward) {
+                // outgoing slide leaves to the left, new one enters from the right
+                oldSlide.classList.add('exiting');
+                oldSlide.addEventListener('transitionend', () => {
+                    oldSlide.classList.remove('exiting');
+                }, { once: true });
+            } else {
+                // going back: outgoing slide returns to its resting spot on the
+                // right, and the new one enters from the left
+                newSlide.classList.remove('exiting');
+                newSlide.classList.add('enterFromLeft');
+                void newSlide.offsetWidth; // commit the left-hand start position
+                newSlide.classList.remove('enterFromLeft');
+            }
 
             newSlide.classList.add('active');
             tabs[activeIndex].classList.remove('active');
             tabs[index].classList.add('active');
             activeIndex = index;
+            if (!fromScroll && syncScroll) syncScroll(index);
         }
 
         tabs.forEach((tab, i) => tab.addEventListener('click', () => goTo(i)));
+
+        // scroll-driven mode: the carousel pins in place (CSS sticky) while
+        // the page scrolls through a taller track; every step of scroll
+        // advances one reflection to the right, and scrolling back up steps
+        // back. Once the last one is reached the page continues as normal.
+        const track = carousel.closest('.reflectionScrollTrack');
+        if (track) {
+            const sticky = track.querySelector('.reflectionSticky');
+            const step = () => Math.max(window.innerHeight * 0.45, 260);
+            const stickyTop = () => parseFloat(getComputedStyle(sticky).top) || 0;
+
+            const layout = () => {
+                track.style.height = (sticky.offsetHeight + (slides.length - 1) * step()) + 'px';
+            };
+            const onScroll = () => {
+                const travelled = stickyTop() - track.getBoundingClientRect().top;
+                const index = Math.min(slides.length - 1, Math.max(0, Math.floor(travelled / step())));
+                goTo(index, true);
+            };
+            syncScroll = (index) => {
+                const trackTop = track.getBoundingClientRect().top + window.scrollY;
+                window.scrollTo({ top: trackTop - stickyTop() + index * step() + 2, behavior: 'smooth' });
+            };
+
+            layout();
+            onScroll();
+            window.addEventListener('scroll', onScroll, { passive: true });
+            window.addEventListener('resize', () => { layout(); onScroll(); });
+            window.addEventListener('load', () => { layout(); onScroll(); });
+        }
 
         // swipe left/right on touch devices to step between reflections —
         // reuses the same goTo/active-class transition as tapping a tab,

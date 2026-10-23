@@ -1636,6 +1636,24 @@ h3 {
   transform: translateX(-24px);
 }
 
+/* start position for a slide entering from the left (when stepping back) */
+.reflectionSlide.enterFromLeft {
+  transform: translateX(-24px);
+  transition: none;
+}
+
+/* scroll-driven reflections: the track is made taller by JS (one step of
+   scroll per reflection) and the title + carousel stay pinned while the
+   page scrolls through it */
+.reflectionScrollTrack {
+  position: relative;
+}
+
+.reflectionSticky {
+  position: sticky;
+  top: 30vh;
+}
+
 /* same title treatment as the Key UX / Interaction details step titles
    (Orbitron, not bold, sized like a heading) — duplicated here rather
    than sharing that ID-scoped selector, since this lives outside
