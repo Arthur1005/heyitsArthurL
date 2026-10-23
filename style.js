@@ -1064,6 +1064,44 @@ function initReflectionCarousel() {
 }
 initReflectionCarousel();
 
+// slide mode (opt-in via <body class="slideMode">): the case study reads
+// like a deck — each block (the intro video and every section) rises and
+// fades in as it arrives, and fades back once it has scrolled past, so the
+// page feels like swapping slides rather than one long scroll. Fully
+// reversible in both directions. Classes are only added by JS, so with JS
+// off (or reduced motion on) everything simply shows as normal.
+function initSlideMode() {
+    if (!document.body.classList.contains('slideMode')) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const content = document.querySelector('.caseStudyContent');
+    if (!content) return;
+    const items = Array.from(content.children)
+        .filter(el => el.matches('.caseStudySection, .resultMedia'));
+    if (!items.length) return;
+    items.forEach(el => el.classList.add('slideItem'));
+
+    let ticking = false;
+    const update = () => {
+        ticking = false;
+        const vh = window.innerHeight;
+        items.forEach(el => {
+            const r = el.getBoundingClientRect();
+            const arrived = r.top < vh * 0.82;
+            const past = r.bottom < vh * 0.28;
+            el.classList.toggle('slideIn', arrived && !past);
+            el.classList.toggle('slidePast', past);
+        });
+    };
+    const onScroll = () => {
+        if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    window.addEventListener('load', update);
+}
+initSlideMode();
+
 // image carousel (Inspiration / Research) — same segmented-tab-bar
 // mechanic as the reflection carousel above, but each slide holds an
 // image instead of a paragraph, and each tab autoplays: an inner

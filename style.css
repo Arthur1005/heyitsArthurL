@@ -2681,3 +2681,21 @@ hr {
     align-self: flex-start;
     height: clamp(24px, 2.6vw, 34px);
 }
+
+/* slide mode (friends-filter page): blocks rise + fade in as they arrive and
+   fade back once scrolled past, so the page feels like swapping slides */
+.slideMode .slideItem {
+    opacity: 0;
+    transform: translateY(56px);
+    transition: opacity 0.7s ease, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.slideMode .slideItem.slideIn {
+    opacity: 1;
+    transform: none;
+}
+
+.slideMode .slideItem.slidePast {
+    opacity: 0.12;
+    transform: translateY(-32px);
+}
