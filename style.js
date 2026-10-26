@@ -1388,7 +1388,7 @@ function initSlideMode() {
         if (!r) return null;
         if (r.points) {
             const lastP = r.points[r.points.length - 1];
-            if (y >= lastP - 3) return k < slides.length - 1 ? 'next' : null;  // last reflection: only the footer is left
+            if (y >= lastP - 3) return k < slides.length - 1 ? 'next' : (y <= lastP + 3 ? 'more' : null);  // last reflection: just "keep scrolling" on to the footer
             if (r.points.some(p => Math.abs(y - p) <= 3)) return 'reflection';
             return null;
         }
@@ -1403,8 +1403,9 @@ function initSlideMode() {
         cueKey = key;
         if (t === 'next') {
             const n = shown + 1;
-            cueLabel.innerHTML = 'Next \u2014 <span class="scrollCueNum">' + String(n + 1).padStart(2, '0') + '</span> ' + titleOf(slides[n]);
-        } else cueLabel.textContent = t === 'reflection' ? 'Next reflection' : 'Scroll';
+            cueLabel.innerHTML = 'Next \u2014 <span class="scrollCueNum"></span>';
+            cueLabel.querySelector('.scrollCueNum').textContent = titleOf(slides[n]);
+        } else cueLabel.textContent = t === 'reflection' ? 'Next reflection' : t === 'more' ? 'Keep scrolling' : 'Scroll';
         const c = content.getBoundingClientRect();
         cue.style.left = Math.round(c.left + c.width / 2) + 'px';
         cue.classList.add('show');
