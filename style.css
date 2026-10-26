@@ -2725,3 +2725,70 @@ hr {
     opacity: 0;
     transform: translateY(40px);
 }
+
+/* ---- scroll cue (slide deck): "Next — 02 Process" with a dot gliding down a line */
+.scrollCue {
+    position: fixed;
+    bottom: clamp(18px, 3.5vh, 36px);
+    left: 50%;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 10px;
+    background: none;
+    border: 0;
+    color: rgba(28, 43, 34, 0.6);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translate(-50%, 10px);
+    transition: opacity 0.5s ease, transform 0.5s ease, color 0.2s ease;
+    pointer-events: none;
+}
+.scrollCue.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+    cursor: pointer;
+}
+.scrollCue:hover { color: #1c2b22; }
+.scrollCueNum { color: #cd3e00; }
+.scrollCueLine {
+    position: relative;
+    width: 7px;
+    height: 44px;
+}
+.scrollCueLine::before {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(28, 43, 34, 0.2);
+}
+.scrollCueLine::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #cd3e00;
+    animation: scrollCueDot 1.9s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+@keyframes scrollCueDot {
+    0%   { transform: translateY(-2px); opacity: 0; }
+    20%  { opacity: 1; }
+    80%  { opacity: 1; }
+    100% { transform: translateY(39px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .scrollCueLine::after { animation: none; transform: translateY(18px); }
+}

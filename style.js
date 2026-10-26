@@ -1365,9 +1365,63 @@ function initSlideMode() {
         tailEls.forEach(el => el.classList.toggle('tailWaiting', waiting));
     };
 
+    // ---- "keep scrolling" cue: appears after a short pause, names what's next
+    const titleOf = (els) => {
+        const h = els[0].querySelector && els[0].querySelector('.projectSubTitle h1');
+        return h ? h.textContent.trim() : '';
+    };
+    const cue = document.createElement('button');
+    cue.type = 'button';
+    cue.className = 'scrollCue';
+    cue.setAttribute('aria-label', 'Scroll to the next part');
+    cue.innerHTML = '<span class="scrollCueLabel"></span><span class="scrollCueLine" aria-hidden="true"></span>';
+    document.body.appendChild(cue);
+    const cueLabel = cue.querySelector('.scrollCueLabel');
+    let cueTimer = 0;
+    const cueText = () => {
+        const k = shown, r = ranges[k], y = window.scrollY;
+        if (!r) return null;
+        if (r.points) {
+            const lastP = r.points[r.points.length - 1];
+            if (y >= lastP - 3) return k < slides.length - 1 ? 'next' : null;  // last reflection: the footer is all that's left
+            return 'Next reflection';
+        }
+        if (y < r.stop - 1) return 'Keep scrolling';
+        return k < slides.length - 1 ? 'next' : null;
+    };
+    const hideCue = () => { cue.classList.remove('show'); clearTimeout(cueTimer); };
+    const armCue = (delay = 1500) => {
+        hideCue();
+        cueTimer = setTimeout(() => {
+            if (swapping || blocked()) return armCue(600);
+            const t = cueText();
+            if (!t) return;
+            if (t === 'next') {
+                const n = shown + 1;
+                cueLabel.innerHTML = 'Next \u2014 <span class="scrollCueNum">' + String(n + 1).padStart(2, '0') + '</span> ' + titleOf(slides[n]);
+            } else cueLabel.textContent = t;
+            // centre it under the content column, not the whole window
+            const c = content.getBoundingClientRect();
+            cue.style.left = Math.round(c.left + c.width / 2) + 'px';
+            cue.classList.add('show');
+        }, delay);
+    };
+    cue.addEventListener('click', () => {
+        if (swapping) return;
+        gesture++;
+        const r = ranges[shown];
+        if (!r.points && window.scrollY < r.stop - 1) window.scrollTo({ top: r.stop, behavior: 'smooth' });
+        else step(1);
+        armCue();
+    });
+    window.addEventListener('wheel', () => armCue(), { passive: true });
+    window.addEventListener('keydown', () => armCue());
+    window.addEventListener('scroll', () => { if (cue.classList.contains('show')) armCue(); }, { passive: true });
+
     measure();
     show(currentIndex());
     syncTail();
+    armCue(1800);
     window.addEventListener('scroll', syncFromScroll, { passive: true });
     window.addEventListener('scroll', syncTail, { passive: true });
     window.addEventListener('resize', () => { measure(); syncFromScroll(); });
