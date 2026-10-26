@@ -1155,15 +1155,17 @@ function initSlideMode() {
         }
     };
     const measureRanges = () => {
-        const top = Math.round(vh() * 0.12), bottomPad = Math.round(vh() * 0.08);
+        // the bottom band is kept clear for the "Next —" scroll cue
+        const top = Math.round(vh() * 0.12), bottomPad = Math.round(Math.max(vh() * 0.08, 150 + vh() * 0.035));
         ranges = slides.map((els, k) => {
             const t = Math.min(...els.map(absTop)), btm = Math.max(...els.map(absBottom));
             const h = btm - t;
-            let start = k === 0 ? 0 : (h <= vh() - top - bottomPad ? t - (vh() - h) / 2 : t - top);
+            // short slides are centred in the space above the cue band
+            let start = k === 0 ? 0 : (h <= vh() - top - bottomPad ? t - (vh() - bottomPad - h) / 2 : t - top);
             start = Math.max(0, Math.min(start, maxScroll()));
             let stop = k === slides.length - 1 ? maxScroll() : Math.max(start, btm + bottomPad - vh());
             // a slide that only overflows by a sliver counts as fitting the screen
-            if (k !== slides.length - 1 && stop - start < vh() * 0.15) stop = start;
+            if (k !== slides.length - 1 && stop - start < vh() * 0.04) stop = start;
             // numbered points (1, 2, 3) turn green as they cross the middle of
             // the screen — make sure the slide can scroll far enough for the
             // last one to get there before it slides on
