@@ -1064,149 +1064,109 @@ function initReflectionCarousel() {
 }
 initReflectionCarousel();
 
-// scroll accordion (opt-in via <body class="accordionMode">): the case
-// study's sections become a numbered list (01 Problem / Needs, 02 Process…)
-// whose titles always stay visible. Only one section is open at a time and
-// it scrolls normally. Scrolling past the end of the open section folds it
-// up and unfolds the next (its title glides to near the top); scrolling up
-// above the open section's title unfolds the previous one, landing on its
-// end. Clicking a title, or a sidebar link, opens that section. Works with
-// normal scrolling (no wheel hijacking), so trackpads, mouse wheels and
-// touch all behave naturally. With JS off everything simply shows open.
-function initScrollAccordion() {
-    if (!document.body.classList.contains('accordionMode')) return;
+// slide mode (opt-in via <body class="slideMode">): natural scrolling with
+// two slide-like touches —
+//  1. fade-ins: each block (page header, intro video, every section, the
+//     closing banner) rises + fades in as it arrives. Blocks you've passed
+//     stay visible, so the page never looks empty or "finished".
+//  2. gentle forward snap: when scrolling stops just before the start of
+//     the next section (or Reflection step) in the direction you were
+//     going, the page eases onto it. It never pulls you back, never acts
+//     mid-section, and any new scroll input cancels it.
+// Classes are added by JS only, and nothing happens with reduced motion on.
+function initSlideMode() {
+    if (!document.body.classList.contains('slideMode')) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const content = document.querySelector('.caseStudyContent');
     if (!content) return;
-    const secs = Array.from(content.children).filter(el => el.matches('.caseStudySection'));
-    if (secs.length < 2) return;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const heroEls = ['.pageProjectMeta', '.aboutPageHomeSubTitle', '.projectRoleTime']
+        .map(sel => document.querySelector('#projectsSection > ' + sel)).filter(Boolean);
+    const blocks = Array.from(content.children).filter(el => el.matches('.caseStudySection, .resultMedia'));
+    const layout = document.querySelector('#projectsSection > .caseStudyLayout');
+    const endEls = layout ? Array.from(layout.parentElement.children)
+        .filter(el => layout.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) : [];
+    const items = [...heroEls, ...blocks, ...endEls];
+    items.forEach(el => el.classList.add('slideItem'));
+
     const vh = () => window.innerHeight;
 
-    // ---- build: header row (number + title + progress line) and a body
-    const parts = secs.map((sec, i) => {
-        let head = sec.querySelector(':scope > .projectSubTitle');
-        if (!head) {
-            // e.g. Reflection, whose title lives inside its pinned area:
-            // lift it out so it acts as this section's title row
-            head = sec.querySelector('.projectSubTitle');
-            if (!head) return null;
-            sec.prepend(head);
-        }
-        const body = document.createElement('div');
-        body.className = 'accBody';
-        const inner = document.createElement('div');
-        inner.className = 'accInner';
-        body.appendChild(inner);
-        Array.from(sec.children).filter(c => c !== head).forEach(c => inner.appendChild(c));
-        sec.appendChild(body);
-        sec.classList.add('accSection');
-        head.classList.add('accHead');
-        const title = head.querySelector('h1');
-        const num = document.createElement('span');
-        num.className = 'accNum';
-        num.setAttribute('aria-hidden', 'true');
-        num.textContent = String(i + 1).padStart(2, '0');
-        title.prepend(num);
-        const line = document.createElement('span');
-        line.className = 'accLine';
-        line.setAttribute('aria-hidden', 'true');
-        head.appendChild(line);
-        head.setAttribute('role', 'button');
-        head.setAttribute('tabindex', '0');
-        body.id = sec.id + '-panel';
-        head.setAttribute('aria-controls', body.id);
-        return { sec, head, body, inner };
-    }).filter(Boolean);
-    if (parts.length < 2) return;
-
-    let active = 0, busy = false;
-    const setState = () => parts.forEach((p, i) => {
-        const on = i === active;
-        p.sec.classList.toggle('accOpen', on);
-        p.head.setAttribute('aria-expanded', on ? 'true' : 'false');
-    });
-    parts.forEach((p, i) => {
-        p.body.style.height = i === active ? 'auto' : '0px';
-        if (i === active) p.body.classList.add('accSettled');
-    });
-    setState();
-
-    // ---- switch to section k, gliding `anchor` (a header) to viewport y `toY`
-    const ease = t => 1 - Math.pow(1 - t, 3);
-    const DURATION = reduce ? 0 : 620;
-    const switchTo = (k, anchor, toY, then) => {
-        if (busy || k === active || k < 0 || k >= parts.length) return;
-        busy = true;
-        const from = parts[active], to = parts[k];
-        active = k;
-        // closing body: from its current height down to 0
-        from.body.classList.remove('accSettled');
-        from.body.style.height = from.body.offsetHeight + 'px';
-        void from.body.offsetHeight;
-        from.body.style.height = '0px';
-        // opening body: from 0 up to its content height
-        to.body.style.height = to.inner.offsetHeight + 'px';
-        setState();
-
-        const startY = anchor.getBoundingClientRect().top;
-        const t0 = performance.now();
-        const frame = (now) => {
-            const p = DURATION ? Math.min(1, (now - t0) / DURATION) : 1;
-            const want = startY + (toY - startY) * ease(p);
-            window.scrollBy(0, anchor.getBoundingClientRect().top - want);
-            if (p < 1) return requestAnimationFrame(frame);
-            to.body.style.height = 'auto';
-            to.body.classList.add('accSettled');
-            window.scrollBy(0, anchor.getBoundingClientRect().top - toY);
-            // pinned / scroll-driven parts (e.g. Reflection) re-measure
-            window.dispatchEvent(new Event('resize'));
-            setTimeout(() => { busy = false; if (then) then(); }, 180);
-        };
-        requestAnimationFrame(frame);
-    };
-    const openAt = (k, then) => {
-        if (k === active) { if (then) then(); else smoothTo(parts[k].head); return; }
-        switchTo(k, parts[k].head, vh() * 0.12, then);
-    };
-    const smoothTo = (el) => window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - vh() * 0.12, behavior: reduce ? 'auto' : 'smooth' });
-
-    // ---- scrolling past the edges of the open section
+    // ---- 1. fade-ins
     let ticking = false;
-    const check = () => {
+    const reveal = () => {
         ticking = false;
-        if (busy || document.body.classList.contains('noScroll') || document.body.classList.contains('navLocked')) return;
-        const cur = parts[active];
-        if (active < parts.length - 1 && cur.body.getBoundingClientRect().bottom < vh() * 0.45) {
-            switchTo(active + 1, parts[active + 1].head, vh() * 0.12);
-        } else if (active > 0 && cur.head.getBoundingClientRect().top > vh() * 0.75) {
-            // keep the title we're leaving low on screen, so the reopened
-            // previous section shows its end just above it
-            switchTo(active - 1, cur.head, vh() * 0.85);
-        }
-    };
-    window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(check); } }, { passive: true });
-
-    // ---- titles and sidebar links open their section
-    parts.forEach((p, i) => {
-        p.head.addEventListener('click', () => openAt(i));
-        p.head.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAt(i); }
+        items.forEach(el => {
+            const r = el.getBoundingClientRect();
+            // in once its top is in the lower part of the screen; only goes
+            // back to hidden when it's entirely below the screen again
+            if (r.top < vh() * 0.85) el.classList.add('slideIn');
+            else if (r.top > vh()) el.classList.remove('slideIn');
         });
-    });
-    document.querySelectorAll('#caseStudyNav a[href^="#"]').forEach(a => {
-        a.addEventListener('click', (e) => {
-            const target = document.getElementById(a.getAttribute('href').slice(1));
-            if (!target) return;
-            const k = parts.findIndex(p => p.sec === target || p.sec.contains(target));
-            if (k < 0) return;
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            const isSub = parts[k].sec !== target;
-            openAt(k, isSub ? () => smoothTo(target) : null);
-        }, true);
-    });
+    };
+    reveal();
+    window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(reveal); } }, { passive: true });
+    window.addEventListener('resize', reveal);
+    window.addEventListener('load', reveal);
+
+    // ---- 2. gentle snap
+    // layout position (ignores the rise-in transform, which would otherwise
+    // shift the measured position while a block is still animating in)
+    const absTop = el => { let y = 0; for (let n = el; n; n = n.offsetParent) y += n.offsetTop; return y; };
+    const anchors = () => {
+        const list = [];
+        const offset = vh() * 0.12;
+        blocks.forEach(el => list.push(absTop(el) - offset));
+        // Reflection steps (same step size initReflectionCarousel uses)
+        document.querySelectorAll('.reflectionScrollTrack').forEach(track => {
+            const sticky = track.querySelector('.reflectionSticky');
+            const n = track.querySelectorAll('.reflectionSlide').length;
+            const stickyTop = parseFloat(getComputedStyle(sticky).top) || 0;
+            const stepR = Math.max(vh() * 0.45, 260);
+            for (let i = 0; i < n; i++) list.push(absTop(track) - stickyTop + i * stepR + stepR * 0.5);
+        });
+        return list.filter(y => y > 0);
+    };
+
+    let suppressUntil = 0, snapping = false, idle = null;
+    let lastY = window.scrollY, direction = 0;
+    // our own snaps, sidebar clicks, tab clicks and back-to-top move the page
+    // on purpose — don't snap after those
+    document.querySelectorAll('#caseStudyNav a, .reflectionTab, .backTop').forEach(el =>
+        el.addEventListener('click', () => { suppressUntil = performance.now() + 1500; }));
+    // any new wheel/touch input cancels a pending snap, so the reader is
+    // never fought while they're still moving
+    ['wheel', 'touchstart', 'keydown'].forEach(type =>
+        window.addEventListener(type, () => { clearTimeout(idle); if (type !== 'keydown') snapping = false; }, { passive: true }));
+
+    // only ever snaps FORWARD (in the direction the reader was scrolling),
+    // and only when a section start is just ahead — it never pulls the page
+    // back to a section the reader is scrolling away from
+    const trySnap = () => {
+        if (performance.now() < suppressUntil || direction === 0) return;
+        if (document.body.classList.contains('noScroll') || document.body.classList.contains('navLocked')) return;
+        const y = window.scrollY, range = vh() * 0.18;
+        let best = null;
+        anchors().forEach(a => {
+            const d = (a - y) * direction;          // distance ahead, in the direction of travel
+            if (d > 3 && d <= range && (best === null || d < (best - y) * direction)) best = a;
+        });
+        if (best === null) return;
+        snapping = true;
+        window.scrollTo({ top: best, behavior: 'smooth' });
+    };
+    const onScroll = () => {
+        const y = window.scrollY;
+        if (Math.abs(y - lastY) > 1 && !snapping) direction = Math.sign(y - lastY);
+        lastY = y;
+        clearTimeout(idle);
+        idle = setTimeout(() => {
+            if (snapping) { snapping = false; direction = 0; return; }   // our own snap just finished
+            trySnap();
+        }, 260);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
 }
-initScrollAccordion();
+initSlideMode();
 
 // image carousel (Inspiration / Research) — same segmented-tab-bar
 // mechanic as the reflection carousel above, but each slide holds an
