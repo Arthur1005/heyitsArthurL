@@ -2682,17 +2682,15 @@ hr {
     height: clamp(24px, 2.6vw, 34px);
 }
 
-/* slide mode (friends-filter page): blocks rise + fade in as they arrive
-   (and stay visible once passed); gentle snapping is handled in style.js */
+/* slide mode (friends-filter page): the block being read is at full strength,
+   everything else stays visible but dimmed; gentle snapping is in style.js */
 .slideMode .slideItem {
-    opacity: 0;
-    transform: translateY(56px);
-    transition: opacity 0.7s ease, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+    opacity: 0.22;
+    transition: opacity 0.5s ease;
 }
 
-.slideMode .slideItem.slideIn {
+.slideMode .slideItem.slideFocus {
     opacity: 1;
-    transform: none;
 }
 
 

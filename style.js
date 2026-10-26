@@ -1066,9 +1066,9 @@ initReflectionCarousel();
 
 // slide mode (opt-in via <body class="slideMode">): natural scrolling with
 // two slide-like touches —
-//  1. fade-ins: each block (page header, intro video, every section, the
-//     closing banner) rises + fades in as it arrives. Blocks you've passed
-//     stay visible, so the page never looks empty or "finished".
+//  1. focus: the block you're reading (page header, intro video, a section,
+//     or the closing banner) is at full strength; every other block stays
+//     visible but dimmed, so it reads like slides yet never looks finished.
 //  2. gentle forward snap: when scrolling stops just before the start of
 //     the next section (or Reflection step) in the direction you were
 //     going, the page eases onto it. It never pulls you back, never acts
@@ -1091,17 +1091,22 @@ function initSlideMode() {
 
     const vh = () => window.innerHeight;
 
-    // ---- 1. fade-ins
+    // ---- 1. focus: the block under the reading line is shown at full
+    // strength and everything else stays visible but dimmed, so it reads
+    // like slides while still showing there's more above and below
     let ticking = false;
     const reveal = () => {
         ticking = false;
+        const line = vh() * 0.45;
+        let focus = null, bestDist = Infinity;
         items.forEach(el => {
             const r = el.getBoundingClientRect();
-            // in once its top is in the lower part of the screen; only goes
-            // back to hidden when it's entirely below the screen again
-            if (r.top < vh() * 0.85) el.classList.add('slideIn');
-            else if (r.top > vh()) el.classList.remove('slideIn');
+            const dist = r.top <= line && r.bottom >= line ? 0 : Math.min(Math.abs(r.top - line), Math.abs(r.bottom - line));
+            if (dist < bestDist) { bestDist = dist; focus = el; }
         });
+        // header items (and the closing items) light up together as one slide
+        const group = heroEls.includes(focus) ? heroEls : endEls.includes(focus) ? endEls : [focus];
+        items.forEach(el => el.classList.toggle('slideFocus', group.includes(el)));
     };
     reveal();
     window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(reveal); } }, { passive: true });
