@@ -2812,3 +2812,8 @@ hr {
     border: 1.5px solid rgba(205, 62, 0, 1);
     background-color: rgba(205, 62, 0, 0.08);
 }
+
+/* footer links: same hover as the top nav */
+footer a:hover {
+    color: #cd3e00;
+}
