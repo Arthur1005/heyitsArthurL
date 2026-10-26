@@ -1675,3 +1675,49 @@ if (sideNavCloseBtn && sideNav) {
         });
     });
 })();
+
+// footer ARTHUR: each letter rises (and warms to orange) by how close the
+// pointer is along the word — eased every frame, so it glides instead of
+// flickering between the thin letter strokes
+function initFooterWave() {
+    const svg = document.querySelector('.footerLogo');
+    const zone = svg && svg.closest('.footer2');
+    if (!zone || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    const letters = Array.from(svg.querySelectorAll('path'));
+    const vbW = svg.viewBox.baseVal.width || 184;
+    const spans = letters.map(p => { const b = p.getBBox(); return [b.x, b.x + b.width]; });
+    const cur = letters.map(() => 0), target = letters.map(() => 0);
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const LIFT = 3.2, REACH = 14;            // in viewBox units (the word is 184 x 7)
+    const from = [233, 233, 233], to = [205, 62, 0];
+    let raf = 0;
+    const frame = () => {
+        let moving = false;
+        letters.forEach((p, i) => {
+            cur[i] += (target[i] - cur[i]) * 0.12;
+            if (Math.abs(target[i] - cur[i]) > 0.002) moving = true; else cur[i] = target[i];
+            const v = cur[i];
+            p.setAttribute('transform', reduce ? '' : 'translate(0 ' + (-LIFT * v).toFixed(3) + ')');
+            const k = Math.pow(v, 1.6);
+            p.style.fill = 'rgb(' + from.map((f, j) => Math.round(f + (to[j] - f) * k)).join(',') + ')';
+        });
+        raf = moving ? requestAnimationFrame(frame) : 0;
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+    zone.addEventListener('mousemove', (e) => {
+        const r = svg.getBoundingClientRect();
+        const u = (e.clientX - r.left) / r.width * vbW;
+        spans.forEach(([a, b], i) => {
+            const d = u < a ? a - u : u > b ? u - b : 0;
+            target[i] = Math.exp(-(d / REACH) * (d / REACH));
+        });
+        kick();
+    });
+    const cursor = () => document.getElementById('customCursor');
+    zone.addEventListener('mouseenter', () => { const c = cursor(); if (c) c.classList.add('footerHover'); });
+    zone.addEventListener('mouseleave', () => {
+        target.fill(0); kick();
+        const c = cursor(); if (c) c.classList.remove('footerHover');
+    });
+}
+initFooterWave();
