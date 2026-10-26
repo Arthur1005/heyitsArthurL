@@ -1064,16 +1064,21 @@ function initReflectionCarousel() {
 }
 initReflectionCarousel();
 
-// slide mode (opt-in via <body class="slideMode">): natural scrolling with
-// two slide-like touches —
-//  1. focus: the block you're reading (page header, intro video, a section,
-//     or the closing banner) is at full strength; every other block stays
-//     visible but dimmed, so it reads like slides yet never looks finished.
-//  2. gentle forward snap: when scrolling stops just before the start of
-//     the next section (or Reflection step) in the direction you were
-//     going, the page eases onto it. It never pulls you back, never acts
-//     mid-section, and any new scroll input cancels it.
-// Classes are added by JS only, and nothing happens with reduced motion on.
+// slide mode (opt-in via <body class="slideMode">): the case study reads as
+// a deck of slides — the page header, intro video, each section and the
+// closing banner. The slide being read is at full strength and every other
+// slide stays visible but dimmed, so it never looks like the page has ended.
+//
+// Desktop (mouse/trackpad): one wheel gesture or arrow key = one move. The
+// page glides (eased animation) to the next slide and settles there. A slide
+// taller than the screen is moved through in ~2/3-screen glides first; the
+// Reflection steps one reflection per gesture. Trackpad inertia after a move
+// is ignored, so a single flick never skips ahead. Sidebar links glide
+// straight to their section.
+//
+// Touch devices: natural scrolling with the same dimming, plus a gentle
+// forward-only snap onto the next section start.
+// Nothing happens with reduced motion on (classes are only added by JS).
 function initSlideMode() {
     if (!document.body.classList.contains('slideMode')) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -1086,17 +1091,31 @@ function initSlideMode() {
     const layout = document.querySelector('#projectsSection > .caseStudyLayout');
     const endEls = layout ? Array.from(layout.parentElement.children)
         .filter(el => layout.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) : [];
-    const items = [...heroEls, ...blocks, ...endEls];
+    const slides = [];
+    if (heroEls.length) slides.push(heroEls);
+    blocks.forEach(el => slides.push([el]));
+    if (endEls.length) slides.push(endEls);
+    const items = slides.flat();
     items.forEach(el => el.classList.add('slideItem'));
 
     const vh = () => window.innerHeight;
+    // layout position (ignores transforms)
+    const absTop = el => { let y = 0; for (let n = el; n; n = n.offsetParent) y += n.offsetTop; return y; };
+    const absBottom = el => absTop(el) + el.offsetHeight;
+    const maxScroll = () => document.documentElement.scrollHeight - vh();
+    const blocked = () => document.body.classList.contains('noScroll') || document.body.classList.contains('navLocked');
 
-    // ---- 1. focus: the block under the reading line is shown at full
-    // strength and everything else stays visible but dimmed, so it reads
-    // like slides while still showing there's more above and below
+    // ---- focus: the slide under the reading line is bright, the rest dimmed
     let ticking = false;
+    let pagingIndex = null;   // set on desktop: the slide we're on, by scroll range
+    let forcedIndex = null;   // while gliding to another slide, highlight the destination
     const reveal = () => {
         ticking = false;
+        if (pagingIndex) {
+            const group = slides[forcedIndex !== null ? forcedIndex : pagingIndex()];
+            items.forEach(el => el.classList.toggle('slideFocus', group.includes(el)));
+            return;
+        }
         const line = vh() * 0.45;
         let focus = null, bestDist = Infinity;
         items.forEach(el => {
@@ -1104,8 +1123,7 @@ function initSlideMode() {
             const dist = r.top <= line && r.bottom >= line ? 0 : Math.min(Math.abs(r.top - line), Math.abs(r.bottom - line));
             if (dist < bestDist) { bestDist = dist; focus = el; }
         });
-        // header items (and the closing items) light up together as one slide
-        const group = heroEls.includes(focus) ? heroEls : endEls.includes(focus) ? endEls : [focus];
+        const group = slides.find(els => els.includes(focus)) || [focus];
         items.forEach(el => el.classList.toggle('slideFocus', group.includes(el)));
     };
     reveal();
@@ -1113,63 +1131,197 @@ function initSlideMode() {
     window.addEventListener('resize', reveal);
     window.addEventListener('load', reveal);
 
-    // ---- 2. gentle snap
-    // layout position (ignores the rise-in transform, which would otherwise
-    // shift the measured position while a block is still animating in)
-    const absTop = el => { let y = 0; for (let n = el; n; n = n.offsetParent) y += n.offsetTop; return y; };
-    const anchors = () => {
-        const list = [];
-        const offset = vh() * 0.12;
-        blocks.forEach(el => list.push(absTop(el) - offset));
-        // Reflection steps (same step size initReflectionCarousel uses)
-        document.querySelectorAll('.reflectionScrollTrack').forEach(track => {
-            const sticky = track.querySelector('.reflectionSticky');
-            const n = track.querySelectorAll('.reflectionSlide').length;
-            const stickyTop = parseFloat(getComputedStyle(sticky).top) || 0;
-            const stepR = Math.max(vh() * 0.45, 260);
-            for (let i = 0; i < n; i++) list.push(absTop(track) - stickyTop + i * stepR + stepR * 0.5);
+    // ---- slide ranges in page-scroll coordinates: [start, stop]
+    // short slides are centred on screen; tall ones start just below the top
+    // and can be moved through until their bottom reaches the screen bottom.
+    // The Reflection gets one stop per reflection.
+    const reflectionSection = blocks.find(el => el.querySelector('.reflectionScrollTrack'));
+    const spacer = document.createElement('div');
+    spacer.className = 'slideSpacer';
+    spacer.setAttribute('aria-hidden', 'true');
+    if (reflectionSection) reflectionSection.appendChild(spacer);
+    let ranges = [];
+    const measureRanges = () => {
+        const top = Math.round(vh() * 0.12), pad = Math.round(vh() * 0.08);
+        ranges = slides.map((els, k) => {
+            const t = Math.min(...els.map(absTop)), btm = Math.max(...els.map(absBottom));
+            const h = btm - t;
+            let start = k === 0 ? 0 : (h <= vh() - top - pad ? t - (vh() - h) / 2 : t - top);
+            let stop = k === slides.length - 1 ? maxScroll() : Math.max(start, btm + pad - vh());
+            if (k !== slides.length - 1 && stop - start < vh() * 0.15) stop = start;
+            let points = null;
+            const track = els[0].querySelector && els[0].querySelector('.reflectionScrollTrack');
+            if (track) {
+                const sticky = track.querySelector('.reflectionSticky');
+                const n = track.querySelectorAll('.reflectionSlide').length;
+                const stickyTop = parseFloat(getComputedStyle(sticky).top) || 0;
+                const stepR = Math.max(vh() * 0.45, 260);
+                const p0 = absTop(track) - stickyTop + 4;
+                points = Array.from({ length: n }, (_, i) => Math.round(p0 + i * stepR + stepR * 0.5));
+                start = Math.min(start, points[0]);
+                stop = points[n - 1];
+            }
+            start = Math.max(0, Math.min(start, maxScroll()));
+            return { start: Math.round(start), stop: Math.round(Math.min(stop, maxScroll())), points };
         });
-        return list.filter(y => y > 0);
+        for (let k = 0; k < ranges.length - 1; k++) {
+            if (ranges[k].points) {
+                ranges[k + 1].start = Math.max(ranges[k + 1].start, ranges[k].stop + 1);
+                ranges[k + 1].stop = Math.max(ranges[k + 1].stop, ranges[k + 1].start);
+            } else {
+                ranges[k].stop = Math.max(ranges[k].start, Math.min(ranges[k].stop, ranges[k + 1].start - 1));
+            }
+        }
+    };
+    const measure = () => {
+        spacer.style.height = '0px';
+        measureRanges();
+        const ref = ranges.find(r => r.points);
+        if (ref) {
+            const need = ref.points[ref.points.length - 1] + 2 - maxScroll();
+            if (need > 0) { spacer.style.height = Math.ceil(need) + 'px'; measureRanges(); }
+        }
+    };
+    const currentIndex = () => {
+        const y = window.scrollY + 2;
+        let k = 0;
+        ranges.forEach((r, i) => { if (y >= r.start) k = i; });
+        return k;
     };
 
-    let suppressUntil = 0, snapping = false, idle = null;
-    let lastY = window.scrollY, direction = 0;
-    // our own snaps, sidebar clicks, tab clicks and back-to-top move the page
-    // on purpose — don't snap after those
-    document.querySelectorAll('#caseStudyNav a, .reflectionTab, .backTop').forEach(el =>
-        el.addEventListener('click', () => { suppressUntil = performance.now() + 1500; }));
-    // any new wheel/touch input cancels a pending snap, so the reader is
-    // never fought while they're still moving
-    ['wheel', 'touchstart', 'keydown'].forEach(type =>
-        window.addEventListener(type, () => { clearTimeout(idle); if (type !== 'keydown') snapping = false; }, { passive: true }));
+    const paging = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-    // only ever snaps FORWARD (in the direction the reader was scrolling),
-    // and only when a section start is just ahead — it never pulls the page
-    // back to a section the reader is scrolling away from
-    const trySnap = () => {
-        if (performance.now() < suppressUntil || direction === 0) return;
-        if (document.body.classList.contains('noScroll') || document.body.classList.contains('navLocked')) return;
-        const y = window.scrollY, range = vh() * 0.18;
-        let best = null;
-        anchors().forEach(a => {
-            const d = (a - y) * direction;          // distance ahead, in the direction of travel
-            if (d > 3 && d <= range && (best === null || d < (best - y) * direction)) best = a;
-        });
-        if (best === null) return;
-        snapping = true;
-        window.scrollTo({ top: best, behavior: 'smooth' });
+    // =================== touch: natural scroll + forward snap ===================
+    if (!paging) {
+        let idle = null, lastY = window.scrollY, direction = 0, snapping = false, suppressUntil = 0;
+        document.querySelectorAll('#caseStudyNav a, .reflectionTab, .backTop').forEach(el =>
+            el.addEventListener('click', () => { suppressUntil = performance.now() + 1500; }));
+        window.addEventListener('touchstart', () => { clearTimeout(idle); snapping = false; }, { passive: true });
+        const trySnap = () => {
+            if (performance.now() < suppressUntil || direction === 0 || blocked()) return;
+            measure();
+            const y = window.scrollY, range = vh() * 0.18;
+            const anchors = ranges.flatMap(r => r.points ? r.points : [r.start]);
+            let best = null;
+            anchors.forEach(a => {
+                const d = (a - y) * direction;
+                if (d > 3 && d <= range && (best === null || d < (best - y) * direction)) best = a;
+            });
+            if (best === null) return;
+            snapping = true;
+            window.scrollTo({ top: best, behavior: 'smooth' });
+        };
+        window.addEventListener('scroll', () => {
+            const y = window.scrollY;
+            if (Math.abs(y - lastY) > 1 && !snapping) direction = Math.sign(y - lastY);
+            lastY = y;
+            clearTimeout(idle);
+            idle = setTimeout(() => {
+                if (snapping) { snapping = false; direction = 0; return; }
+                trySnap();
+            }, 260);
+        }, { passive: true });
+        return;
+    }
+
+    // =================== desktop: one gesture = one glide ===================
+    document.body.classList.add('paging');
+    measure();
+    pagingIndex = currentIndex;
+    reveal();
+
+    let animating = false, rafId = null;
+    const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;   // easeInOutCubic
+    const glideTo = (target, duration, toIndex = null) => {
+        target = Math.max(0, Math.min(Math.round(target), maxScroll()));
+        forcedIndex = toIndex;
+        reveal();
+        const from = window.scrollY, dist = target - from;
+        if (Math.abs(dist) < 2) { forcedIndex = null; reveal(); return; }
+        duration = duration || Math.min(900, 520 + Math.abs(dist) * 0.12);
+        animating = true;
+        cancelAnimationFrame(rafId);
+        const t0 = performance.now();
+        const frame = (now) => {
+            const p = Math.min(1, (now - t0) / duration);
+            window.scrollTo(0, from + dist * ease(p));
+            if (p < 1) rafId = requestAnimationFrame(frame);
+            else { animating = false; forcedIndex = null; reveal(); }
+        };
+        rafId = requestAnimationFrame(frame);
     };
-    const onScroll = () => {
-        const y = window.scrollY;
-        if (Math.abs(y - lastY) > 1 && !snapping) direction = Math.sign(y - lastY);
-        lastY = y;
-        clearTimeout(idle);
-        idle = setTimeout(() => {
-            if (snapping) { snapping = false; direction = 0; return; }   // our own snap just finished
-            trySnap();
-        }, 260);
+
+    const move = (dir) => {
+        measure();
+        const k = currentIndex(), r = ranges[k], y = window.scrollY;
+        if (r.points) {
+            let idx = -1;
+            r.points.forEach((p, i) => { if (y >= p - 3) idx = i; });
+            if (dir > 0) {
+                if (idx < r.points.length - 1) return glideTo(r.points[idx + 1], 560);
+                if (k < slides.length - 1) return glideTo(ranges[k + 1].start, 0, k + 1);
+            } else {
+                if (idx > 0) return glideTo(r.points[idx - 1], 560);
+                if (k > 0) return glideTo(ranges[k - 1].stop, 0, k - 1);
+            }
+            return;
+        }
+        const chunk = vh() * 0.68;
+        if (dir > 0) {
+            if (y < r.stop - 2) return glideTo(Math.min(y + chunk, r.stop));
+            if (k < slides.length - 1) {
+                const next = ranges[k + 1];
+                return glideTo(next.points ? next.points[0] : next.start, 0, k + 1);
+            }
+        } else {
+            if (y > r.start + 2) return glideTo(Math.max(y - chunk, r.start));
+            if (k > 0) return glideTo(ranges[k - 1].stop, 0, k - 1);
+        }
     };
-    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // ---- input
+    let gesture = 0, lastWheel = 0, usedGesture = -1;
+    window.addEventListener('wheel', (e) => {
+        if (blocked() || e.ctrlKey) return;               // pinch-zoom / open overlays behave normally
+        e.preventDefault();
+        const now = performance.now();
+        if (now - lastWheel > 160) gesture++;             // a pause starts a new gesture
+        lastWheel = now;
+        if (animating || gesture === usedGesture) return; // one move per gesture; ignore its inertia
+        const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? vh() : 1);
+        if (Math.abs(dy) < 2) return;
+        usedGesture = gesture;
+        move(Math.sign(dy));
+    }, { passive: false });
+
+    window.addEventListener('keydown', (e) => {
+        if (blocked() || e.target.closest('input, textarea, select, [contenteditable]')) return;
+        const down = ['ArrowDown', 'PageDown'].includes(e.key) || (e.key === ' ' && !e.shiftKey);
+        const up = ['ArrowUp', 'PageUp'].includes(e.key) || (e.key === ' ' && e.shiftKey);
+        if (!down && !up) return;
+        e.preventDefault();
+        if (!animating) move(down ? 1 : -1);
+    });
+
+    // sidebar links glide straight to their section
+    document.querySelectorAll('#caseStudyNav a[href^="#"]').forEach(a => {
+        a.addEventListener('click', (e) => {
+            const target = document.getElementById(a.getAttribute('href').slice(1));
+            if (!target) return;
+            const k = slides.findIndex(els => els.some(el => el === target || el.contains(target)));
+            if (k < 0) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            measure();
+            const r = ranges[k];
+            const isSub = slides[k][0] !== target;
+            glideTo(isSub ? Math.min(r.stop, Math.max(r.start, absTop(target) - vh() * 0.12)) : (r.points ? r.points[0] : r.start), 0, k);
+        }, true);
+    });
+
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('load', measure);
 }
 initSlideMode();
 
