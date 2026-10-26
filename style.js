@@ -1069,10 +1069,10 @@ initReflectionCarousel();
 //  1. fade-ins: each block (page header, intro video, every section, the
 //     closing banner) rises + fades in as it arrives. Blocks you've passed
 //     stay visible, so the page never looks empty or "finished".
-//  2. gentle snap: when scrolling stops close to the start of a section (or
-//     to one of the Reflection's steps), the page eases onto it. Stopping
-//     part-way through a long section leaves it alone, and sidebar clicks
-//     are never followed by a snap.
+//  2. gentle forward snap: when scrolling stops just before the start of
+//     the next section (or Reflection step) in the direction you were
+//     going, the page eases onto it. It never pulls you back, never acts
+//     mid-section, and any new scroll input cancels it.
 // Classes are added by JS only, and nothing happens with reduced motion on.
 function initSlideMode() {
     if (!document.body.classList.contains('slideMode')) return;
@@ -1128,32 +1128,43 @@ function initSlideMode() {
     };
 
     let suppressUntil = 0, snapping = false, idle = null;
+    let lastY = window.scrollY, direction = 0;
     // our own snaps, sidebar clicks, tab clicks and back-to-top move the page
     // on purpose — don't snap after those
     document.querySelectorAll('#caseStudyNav a, .reflectionTab, .backTop').forEach(el =>
         el.addEventListener('click', () => { suppressUntil = performance.now() + 1500; }));
+    // any new wheel/touch input cancels a pending snap, so the reader is
+    // never fought while they're still moving
+    ['wheel', 'touchstart', 'keydown'].forEach(type =>
+        window.addEventListener(type, () => { clearTimeout(idle); if (type !== 'keydown') snapping = false; }, { passive: true }));
 
-    const SNAP_RANGE = () => vh() * 0.2;
+    // only ever snaps FORWARD (in the direction the reader was scrolling),
+    // and only when a section start is just ahead — it never pulls the page
+    // back to a section the reader is scrolling away from
     const trySnap = () => {
-        if (snapping || performance.now() < suppressUntil) { snapping = false; return; }
+        if (performance.now() < suppressUntil || direction === 0) return;
         if (document.body.classList.contains('noScroll') || document.body.classList.contains('navLocked')) return;
-        const y = window.scrollY;
+        const y = window.scrollY, range = vh() * 0.18;
         let best = null;
-        anchors().forEach(a => { if (best === null || Math.abs(a - y) < Math.abs(best - y)) best = a; });
+        anchors().forEach(a => {
+            const d = (a - y) * direction;          // distance ahead, in the direction of travel
+            if (d > 3 && d <= range && (best === null || d < (best - y) * direction)) best = a;
+        });
         if (best === null) return;
-        const d = best - y;
-        if (Math.abs(d) < 3 || Math.abs(d) > SNAP_RANGE()) return;
         snapping = true;
         window.scrollTo({ top: best, behavior: 'smooth' });
     };
-    const onScrollIdle = () => {
+    const onScroll = () => {
+        const y = window.scrollY;
+        if (Math.abs(y - lastY) > 1 && !snapping) direction = Math.sign(y - lastY);
+        lastY = y;
         clearTimeout(idle);
         idle = setTimeout(() => {
-            if (snapping) { snapping = false; return; }   // our own snap just finished
+            if (snapping) { snapping = false; direction = 0; return; }   // our own snap just finished
             trySnap();
-        }, 180);
+        }, 260);
     };
-    window.addEventListener('scroll', onScrollIdle, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
 }
 initSlideMode();
 
