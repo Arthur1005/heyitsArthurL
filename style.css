@@ -2682,8 +2682,8 @@ hr {
     height: clamp(24px, 2.6vw, 34px);
 }
 
-/* slide mode (friends-filter page): blocks rise + fade in as they arrive
-   (and stay visible once passed); gentle snapping is handled in style.js */
+/* slide mode (friends-filter page): blocks rise + fade in as they arrive and
+   fade back once scrolled past, so the page feels like swapping slides */
 .slideMode .slideItem {
     opacity: 0;
     transform: translateY(56px);
@@ -2695,4 +2695,27 @@ hr {
     transform: none;
 }
 
+.slideMode .slideItem.slidePast {
+    opacity: 0.12;
+    transform: translateY(-32px);
+}
 
+/* desktop paging: only the current slide is visible; leaving slides fade
+   out quickly in the direction of travel, the new one fades/rises in */
+.slideMode.paging .slideItem {
+    transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.slideMode.paging .slideItem.slidePast {
+    opacity: 0;
+    transform: translateY(-40px);
+}
+
+.slideMode.paging .slideItem.leavingUp,
+.slideMode.paging .slideItem.leavingDown {
+    opacity: 0;
+    transition: opacity 0.26s ease, transform 0.26s ease;
+}
+
+.slideMode.paging .slideItem.leavingUp { transform: translateY(-28px); }
+.slideMode.paging .slideItem.leavingDown { transform: translateY(28px); }
