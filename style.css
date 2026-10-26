@@ -2682,15 +2682,105 @@ hr {
     height: clamp(24px, 2.6vw, 34px);
 }
 
-/* slide mode (friends-filter page): the block being read is at full strength,
-   everything else stays visible but dimmed; gentle snapping is in style.js */
-.slideMode .slideItem {
-    opacity: 0.22;
-    transition: opacity 0.5s ease;
+
+
+
+/* scroll accordion (friends-filter page): numbered section titles always
+   visible; the open section shows its content, the rest collapse to their
+   title row. Motion + logic in style.js (initScrollAccordion). */
+.accordionMode .accSection {
+    margin-bottom: 0;
+    border-top: 1px solid rgba(28, 43, 34, 0.15);
 }
 
-.slideMode .slideItem.slideFocus {
+.accordionMode .accSection:last-child {
+    border-bottom: 1px solid rgba(28, 43, 34, 0.15);
+}
+
+/* the existing ".style3 > div" spacing now targets the accordion's own
+   title row and body; keep those flush, and give the content the spacing
+   it had before it moved inside the accordion body */
+.accordionMode .accSection > .accHead,
+.accordionMode .accSection > .accBody {
+    margin: 0;
+}
+
+.accordionMode .style3 .accInner > div {
+    margin: 5% 0;
+}
+
+.accordionMode .accHead {
+    position: relative;
+    margin: 0;
+    padding: clamp(22px, 3vw, 32px) 0;
+    cursor: none;
+    color: rgba(28, 43, 34, 0.38);
+    transition: color 0.3s ease;
+}
+
+.accordionMode .accHead h1 {
+    display: flex;
+    align-items: baseline;
+    gap: clamp(16px, 2.5vw, 32px);
+    transition: color 0.3s ease;
+}
+
+.accordionMode .accNum {
+    font-weight: normal;
+    min-width: 2.2em;
+}
+
+.accordionMode .accHead:hover,
+.accordionMode .accOpen .accHead {
+    color: #1c2b22;
+}
+
+.accordionMode .accOpen .accHead h1 {
+    color: #1c2b22;
+}
+
+.accordionMode .accLine {
+    position: absolute;
+    left: 0;
+    top: -1px;
+    height: 2px;
+    width: 0;
+    background: #cd3e00;
+    transition: width 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.accordionMode .accOpen .accLine {
+    width: 100%;
+}
+
+.accordionMode .accBody {
+    overflow: hidden;
+    transition: height 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* once open and settled, let content (e.g. Reflection's pinned carousel)
+   behave normally */
+.accordionMode .accBody.accSettled {
+    overflow: visible;
+}
+
+.accordionMode .accInner {
+    padding-bottom: clamp(40px, 6vw, 80px);
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.45s ease, transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.accordionMode .accOpen .accInner {
     opacity: 1;
+    transform: none;
+    transition-delay: 0.12s;
 }
 
-
+@media (prefers-reduced-motion: reduce) {
+    .accordionMode .accBody,
+    .accordionMode .accInner,
+    .accordionMode .accLine {
+        transition: none;
+    }
+}
