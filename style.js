@@ -41,7 +41,8 @@ if (!isMobileViewport) {
             customCursor.style.top = mouseY + 'px';
         }
 
-        if (!isOverMarquee) {
+        // no letter trail over the marquees or anywhere in the footer
+        if (!isOverMarquee && !(e.target.closest && e.target.closest('footer'))) {
             createCursorTrail(mouseX, mouseY);
         }
     });
