@@ -1003,8 +1003,10 @@ function initReflectionCarousel() {
             const step = () => Math.max(window.innerHeight * 0.45, 260);
             const stickyTop = () => parseFloat(getComputedStyle(sticky).top) || 0;
 
+            // + extra room so the last reflection stays pinned too, instead of
+            // the section already starting to scroll away when it appears
             const layout = () => {
-                track.style.height = (sticky.offsetHeight + (slides.length - 1) * step()) + 'px';
+                track.style.height = (sticky.offsetHeight + (slides.length - 1) * step() + step() * 0.75) + 'px';
             };
             const onScroll = () => {
                 const travelled = stickyTop() - track.getBoundingClientRect().top;
@@ -1162,6 +1164,14 @@ function initSlideMode() {
             let stop = k === slides.length - 1 ? maxScroll() : Math.max(start, btm + bottomPad - vh());
             // a slide that only overflows by a sliver counts as fitting the screen
             if (k !== slides.length - 1 && stop - start < vh() * 0.15) stop = start;
+            // numbered points (1, 2, 3) turn green as they cross the middle of
+            // the screen — make sure the slide can scroll far enough for the
+            // last one to get there before it slides on
+            const numbered = els.flatMap(el => Array.from(el.querySelectorAll ? el.querySelectorAll('.numberedList .stepItem') : []));
+            if (numbered.length) {
+                const lastItem = numbered[numbered.length - 1];
+                stop = Math.max(stop, absBottom(lastItem) - vh() * 0.5 + 16);
+            }
             // a scroll-driven Reflection needs enough travel to reach its last
             // reflection (same step size as initReflectionCarousel uses)
             // a scroll-driven Reflection gets one stop per reflection, so each
@@ -1235,7 +1245,9 @@ function initSlideMode() {
             const lastP = r.points[r.points.length - 1];
             // past the last reflection (e.g. scrolling on to the footer):
             // plain scrolling between the last reflection and the page end
-            if ((y > lastP + 3 || (dy > 0 && y >= lastP - 3)) && r.stop > lastP + 3) {
+            // (moving on from the last reflection needs a fresh gesture, so the
+            // gesture that showed it doesn't also carry the page onwards)
+            if ((y > lastP + 3 || (dy > 0 && y >= lastP - 3 && hopGesture !== gesture)) && r.stop > lastP + 3) {
                 if (dy > 0) {
                     window.scrollTo({ top: Math.min(y + dy, r.stop), behavior: 'instant' });
                     return;
@@ -1342,9 +1354,22 @@ function initSlideMode() {
         }, true);
     });
 
+    // the closing banner + footer (part of the last slide) stay hidden while
+    // the reflections are showing, and fade in once you scroll past the last one
+    const tailEls = endEls;
+    const syncTail = () => {
+        const last = ranges[ranges.length - 1];
+        if (!last || !last.points) return;
+        const lastP = last.points[last.points.length - 1];
+        const waiting = window.scrollY <= lastP + 3;
+        tailEls.forEach(el => el.classList.toggle('tailWaiting', waiting));
+    };
+
     measure();
     show(currentIndex());
+    syncTail();
     window.addEventListener('scroll', syncFromScroll, { passive: true });
+    window.addEventListener('scroll', syncTail, { passive: true });
     window.addEventListener('resize', () => { measure(); syncFromScroll(); });
     window.addEventListener('load', () => { measure(); show(currentIndex()); });
 }

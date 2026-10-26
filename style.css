@@ -2719,3 +2719,9 @@ hr {
 
 .slideMode.paging .slideItem.leavingUp { transform: translateY(-28px); }
 .slideMode.paging .slideItem.leavingDown { transform: translateY(28px); }
+
+/* last slide: banner + footer wait until you scroll past the last reflection */
+.slideMode.paging .slideItem.tailWaiting {
+    opacity: 0;
+    transform: translateY(40px);
+}
