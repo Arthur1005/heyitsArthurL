@@ -1222,18 +1222,20 @@ function initSlideMode() {
 
     // ---- swapping with a fade
     let swapping = false, lockedGesture = -1, swapEndedAt = 0;
+    let updateCue = () => {};
     const SWAP_OUT_MS = 280, SWAP_IN_MS = 520;
     const swapTo = (k, landAt) => {
         if (swapping || k < 0 || k >= slides.length) return;
         const from = shown, forward = k > from;
         swapping = true;
         lockedGesture = gesture;
+        updateCue();
         slides[from].forEach(el => el.classList.add(forward ? 'leavingUp' : 'leavingDown'));
         setTimeout(() => {
             window.scrollTo({ top: landAt, behavior: 'instant' });
             slides[from].forEach(el => el.classList.remove('leavingUp', 'leavingDown'));
             show(k);
-            setTimeout(() => { swapping = false; swapEndedAt = performance.now(); }, SWAP_IN_MS);
+            setTimeout(() => { swapping = false; swapEndedAt = performance.now(); updateCue(); }, SWAP_IN_MS);
         }, SWAP_OUT_MS);
     };
 
@@ -1365,7 +1367,8 @@ function initSlideMode() {
         tailEls.forEach(el => el.classList.toggle('tailWaiting', waiting));
     };
 
-    // ---- "keep scrolling" cue: appears after a short pause, names what's next
+    // ---- "keep scrolling" cue: pops up the moment you reach the bottom of a
+    // section and names what's next (plus a hint on first arrival)
     const titleOf = (els) => {
         const h = els[0].querySelector && els[0].querySelector('.projectSubTitle h1');
         return h ? h.textContent.trim() : '';
@@ -1373,55 +1376,54 @@ function initSlideMode() {
     const cue = document.createElement('button');
     cue.type = 'button';
     cue.className = 'scrollCue';
-    cue.setAttribute('aria-label', 'Scroll to the next part');
+    cue.setAttribute('aria-label', 'Go to the next part');
     cue.innerHTML = '<span class="scrollCueLabel"></span><span class="scrollCueLine" aria-hidden="true"></span>';
     document.body.appendChild(cue);
     const cueLabel = cue.querySelector('.scrollCueLabel');
-    let cueTimer = 0;
-    const cueText = () => {
+    let cueKey = '', hasScrolled = false;
+    const cueState = () => {
         const k = shown, r = ranges[k], y = window.scrollY;
         if (!r) return null;
         if (r.points) {
             const lastP = r.points[r.points.length - 1];
-            if (y >= lastP - 3) return k < slides.length - 1 ? 'next' : null;  // last reflection: the footer is all that's left
-            return 'Next reflection';
+            if (y >= lastP - 3) return k < slides.length - 1 ? 'next' : null;  // last reflection: only the footer is left
+            if (r.points.some(p => Math.abs(y - p) <= 3)) return 'reflection';
+            return null;
         }
-        if (y < r.stop - 1) return 'Keep scrolling';
-        return k < slides.length - 1 ? 'next' : null;
+        if (y >= r.stop - 1) return k < slides.length - 1 ? 'next' : null;  // bottom of the section
+        return hasScrolled ? null : 'start';
     };
-    const hideCue = () => { cue.classList.remove('show'); clearTimeout(cueTimer); };
-    const armCue = (delay = 1500) => {
-        hideCue();
-        cueTimer = setTimeout(() => {
-            if (swapping || blocked()) return armCue(600);
-            const t = cueText();
-            if (!t) return;
-            if (t === 'next') {
-                const n = shown + 1;
-                cueLabel.innerHTML = 'Next \u2014 <span class="scrollCueNum">' + String(n + 1).padStart(2, '0') + '</span> ' + titleOf(slides[n]);
-            } else cueLabel.textContent = t;
-            // centre it under the content column, not the whole window
-            const c = content.getBoundingClientRect();
-            cue.style.left = Math.round(c.left + c.width / 2) + 'px';
-            cue.classList.add('show');
-        }, delay);
+    updateCue = () => {
+        const t = (swapping || blocked()) ? null : cueState();
+        if (!t) { cue.classList.remove('show', 'callout'); cueKey = ''; return; }
+        const key = t + ':' + shown;
+        if (key === cueKey) return;
+        cueKey = key;
+        if (t === 'next') {
+            const n = shown + 1;
+            cueLabel.innerHTML = 'Next \u2014 <span class="scrollCueNum">' + String(n + 1).padStart(2, '0') + '</span> ' + titleOf(slides[n]);
+        } else cueLabel.textContent = t === 'reflection' ? 'Next reflection' : 'Scroll';
+        const c = content.getBoundingClientRect();
+        cue.style.left = Math.round(c.left + c.width / 2) + 'px';
+        cue.classList.add('show');
+        cue.classList.remove('callout'); void cue.offsetWidth; cue.classList.add('callout');
     };
     cue.addEventListener('click', () => {
         if (swapping) return;
         gesture++;
-        const r = ranges[shown];
-        if (!r.points && window.scrollY < r.stop - 1) window.scrollTo({ top: r.stop, behavior: 'smooth' });
-        else step(1);
-        armCue();
+        step(1);
     });
-    window.addEventListener('wheel', () => armCue(), { passive: true });
-    window.addEventListener('keydown', () => armCue());
-    window.addEventListener('scroll', () => { if (cue.classList.contains('show')) armCue(); }, { passive: true });
+    let cueTick = false;
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 4) hasScrolled = true;
+        if (!cueTick) { cueTick = true; requestAnimationFrame(() => { cueTick = false; updateCue(); }); }
+    }, { passive: true });
+    window.addEventListener('resize', () => { cueKey = ''; updateCue(); });
 
     measure();
     show(currentIndex());
     syncTail();
-    armCue(1800);
+    setTimeout(updateCue, 400);
     window.addEventListener('scroll', syncFromScroll, { passive: true });
     window.addEventListener('scroll', syncTail, { passive: true });
     window.addEventListener('resize', () => { measure(); syncFromScroll(); });
