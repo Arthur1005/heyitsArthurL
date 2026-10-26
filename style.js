@@ -1705,19 +1705,72 @@ function initFooterWave() {
         raf = moving ? requestAnimationFrame(frame) : 0;
     };
     const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+    // ---- a soft piano-like note per letter (C major pentatonic, so any run
+    // across the name sounds pleasant). Browsers only allow sound after the
+    // visitor has clicked / tapped / pressed a key on the page once.
+    const NOTES = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];   // C5 D5 E5 G5 A5 C6
+    let ctx = null, master = null, lastLetter = -1, lastNoteAt = 0;
+    const audio = () => {
+        if (!ctx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return null;
+            ctx = new AC();
+            master = ctx.createGain();
+            master.gain.value = 0.18;
+            const tone = ctx.createBiquadFilter();
+            tone.type = 'lowpass';
+            tone.frequency.value = 3200;
+            master.connect(tone).connect(ctx.destination);
+        }
+        if (ctx.state === 'suspended') ctx.resume();
+        return ctx;
+    };
+    ['pointerdown', 'keydown'].forEach(ev => window.addEventListener(ev, () => audio(), { once: true, passive: true }));
+    const playNote = (freq) => {
+        const c = audio();
+        if (!c || c.state !== 'running') return;
+        const t = c.currentTime;
+        const out = c.createGain();
+        out.gain.setValueAtTime(0.0001, t);
+        out.gain.exponentialRampToValueAtTime(1, t + 0.008);          // hammer strike
+        out.gain.exponentialRampToValueAtTime(0.25, t + 0.25);        // quick initial fall
+        out.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);       // long ring-out
+        out.connect(master);
+        // a few harmonics, the higher ones fading faster, for a piano-ish timbre
+        [[1, 0.6, 1.8], [2, 0.22, 0.9], [3, 0.1, 0.5], [4, 0.05, 0.3]].forEach(([h, g, len]) => {
+            const o = c.createOscillator(), og = c.createGain();
+            o.type = 'sine';
+            o.frequency.value = freq * h * (1 + (h - 1) * 0.0008);    // slight string stretch
+            og.gain.setValueAtTime(g, t);
+            og.gain.exponentialRampToValueAtTime(0.0001, t + len);
+            o.connect(og).connect(out);
+            o.start(t);
+            o.stop(t + len + 0.05);
+        });
+    };
+
     zone.addEventListener('mousemove', (e) => {
         const r = svg.getBoundingClientRect();
         const u = (e.clientX - r.left) / r.width * vbW;
+        let over = -1;
         spans.forEach(([a, b], i) => {
             const d = u < a ? a - u : u > b ? u - b : 0;
+            if (d === 0) over = i;
             target[i] = Math.exp(-(d / REACH) * (d / REACH));
         });
+        // play when the pointer moves onto a new letter
+        const now = performance.now();
+        if (over !== -1 && over !== lastLetter && now - lastNoteAt > 70) {
+            playNote(NOTES[over % NOTES.length]);
+            lastNoteAt = now;
+        }
+        if (over !== -1) lastLetter = over;
         kick();
     });
     const cursor = () => document.getElementById('customCursor');
     zone.addEventListener('mouseenter', () => { const c = cursor(); if (c) c.classList.add('footerHover'); });
     zone.addEventListener('mouseleave', () => {
-        target.fill(0); kick();
+        target.fill(0); kick(); lastLetter = -1;
         const c = cursor(); if (c) c.classList.remove('footerHover');
     });
 }
