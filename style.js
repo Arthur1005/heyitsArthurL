@@ -1092,17 +1092,23 @@ function initSlideMode() {
     const layout = document.querySelector('#projectsSection > .caseStudyLayout');
     const endEls = layout ? Array.from(layout.parentElement.children)
         .filter(el => layout.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) : [];
+    // the top of the page (header + intro video) belongs to the first
+    // section's slide, and the closing banner + footer to the last one, so
+    // both ends scroll normally into / out of the deck
+    const sectionBlocks = blocks.filter(el => el.matches('.caseStudySection'));
+    if (sectionBlocks.length < 2) return;
+    const firstSec = sectionBlocks[0], lastSec = sectionBlocks[sectionBlocks.length - 1];
     const slides = [];
-    if (heroEls.length) slides.push(heroEls);
-    blocks.forEach(el => slides.push([el]));
-    if (endEls.length) slides.push(endEls);
-    if (slides.length < 2) return;
+    slides.push([...heroEls, ...blocks.slice(0, blocks.indexOf(firstSec) + 1)]);
+    blocks.slice(blocks.indexOf(firstSec) + 1, blocks.indexOf(lastSec)).forEach(el => slides.push([el]));
+    slides.push([lastSec, ...blocks.slice(blocks.indexOf(lastSec) + 1), ...endEls]);
     slides.flat().forEach(el => el.classList.add('slideItem'));
 
     const paging = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     const vh = () => window.innerHeight;
-    const absTop = el => el.getBoundingClientRect().top + window.scrollY;
-    const absBottom = el => el.getBoundingClientRect().bottom + window.scrollY;
+    // layout position (ignores the slide transforms on hidden slides)
+    const absTop = el => { let y = 0; for (let n = el; n; n = n.offsetParent) y += n.offsetTop; return y; };
+    const absBottom = el => absTop(el) + el.offsetHeight;
     const maxScroll = () => document.documentElement.scrollHeight - vh();
 
     // ---- touch / reduced setups: arrival-based fade only
@@ -1171,7 +1177,8 @@ function initSlideMode() {
                 const p0 = absTop(track) - stickyTop + 4;
                 points = Array.from({ length: n }, (_, i) => Math.round(p0 + i * stepR + stepR * 0.5));
                 start = Math.min(start, points[0]);
-                stop = points[n - 1];
+                // the last slide carries on past its last reflection to the footer
+                stop = k === slides.length - 1 ? Math.max(maxScroll(), points[n - 1]) : points[n - 1];
             }
             return { start: Math.round(start), stop: Math.round(Math.min(stop, maxScroll())), points };
         });
@@ -1225,6 +1232,21 @@ function initSlideMode() {
     const step = (dy) => {
         const k = shown, r = ranges[k], y = window.scrollY;
         if (r.points) {
+            const lastP = r.points[r.points.length - 1];
+            // past the last reflection (e.g. scrolling on to the footer):
+            // plain scrolling between the last reflection and the page end
+            if ((y > lastP + 3 || (dy > 0 && y >= lastP - 3)) && r.stop > lastP + 3) {
+                if (dy > 0) {
+                    window.scrollTo({ top: Math.min(y + dy, r.stop), behavior: 'instant' });
+                    return;
+                }
+                if (y > lastP + 3) {
+                    const ny = Math.max(y + dy, lastP);
+                    window.scrollTo({ top: ny, behavior: 'instant' });
+                    if (ny <= lastP + 3) { endHitGesture = hopGesture = gesture; endHitAt = performance.now(); }
+                    return;
+                }
+            }
             // Reflection: hop between its reflections (one hop per gesture),
             // then on to the next slide
             if (hopGesture === gesture) return;
@@ -1251,7 +1273,7 @@ function initSlideMode() {
             if (y < r.stop - 1) {
                 const ny = Math.min(y + dy, r.stop);
                 window.scrollTo({ top: ny, behavior: 'instant' });
-                if (ny >= r.stop - 1) endHitGesture = gesture; endHitAt = performance.now();
+                if (ny >= r.stop - 1) { endHitGesture = gesture; endHitAt = performance.now(); }
             } else if (k < slides.length - 1 && endHitGesture !== gesture) {
                 swapTo(k + 1, ranges[k + 1].points ? ranges[k + 1].points[0] : ranges[k + 1].start);
             }
@@ -1259,7 +1281,7 @@ function initSlideMode() {
             if (y > r.start + 1) {
                 const ny = Math.max(y + dy, r.start);
                 window.scrollTo({ top: ny, behavior: 'instant' });
-                if (ny <= r.start + 1) endHitGesture = gesture; endHitAt = performance.now();
+                if (ny <= r.start + 1) { endHitGesture = gesture; endHitAt = performance.now(); }
             } else if (k > 0 && endHitGesture !== gesture) {
                 swapTo(k - 1, ranges[k - 1].stop);
             }
